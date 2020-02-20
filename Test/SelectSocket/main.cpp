@@ -39,7 +39,7 @@ struct LoginResult:public DataHeader
 {
     LoginResult(){
         datalength = sizeof(LoginResult);
-        cmd = CMD_NEWLOGIN;
+        cmd = CMD_LOGIN_RESULT;
     }
     int result;
 };
@@ -69,7 +69,7 @@ struct NewLogin:public DataHeader
 {
     NewLogin(){
         datalength = sizeof(NewLogin);
-        cmd = CMD_LOGIN_RESULT;
+        cmd = CMD_NEWLOGIN;
     }
     int sockId;
 };
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     sockaddr_in _sin ={};
     _sin.sin_family = AF_INET;
     //我们自己的主机不止一个IP地址
-    _sin.sin_addr.S_un.S_addr= inet_addr("127.0.0.1");   // INADDE_ANY 本机任何的地址都可以访问
+    _sin.sin_addr.S_un.S_addr= inet_addr("192.168.199.103");   // INADDE_ANY 本机任何的地址都可以访问
     //主机的short 转换到网络中的类型
     _sin.sin_port=htons(9000);
 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 
         }
 
-        cout << "Server have time to do something123 !" << endl;
+//        cout << "Server have time to do something123 !" << endl;
     }
 
     //关闭
