@@ -1,11 +1,28 @@
-#define WIN32_LEAN_AND_MEAN  //windows避免调用之前的宏定义，产生冲突
 #include <iostream>
 #include <vector>
 #include "algorithm"
+
 //windows
-#include <windows.h>  //windows系统头文件
-#include <winsock2.h>
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN  //windows避免调用之前的宏定义，产生冲突
+    #include <windows.h>  //windows系统头文件
+    #include <winsock2.h>
+
+#else
+    #include <unistd.h>
+    #include <arpa/inet.h>
+    #include <string.h>
+
+
+    #define SOCKET  int
+    #define INVALID_SOCKET (SOCKET)(~0)
+    #define SOCKET_ERROR           (-1)
+#endif
+
+
+#include <stdio.h>
 #include <thread>
+#include<pthread.h>
 
 using namespace std;
 
@@ -40,7 +57,7 @@ struct LoginResult:public DataHeader
 {
     LoginResult(){
         datalength = sizeof(LoginResult);
-        cmd = CMD_NEWLOGIN;
+        cmd = CMD_LOGIN_RESULT;
     }
     int result;
 };
@@ -70,10 +87,11 @@ struct NewLogin:public DataHeader
 {
     NewLogin(){
         datalength = sizeof(NewLogin);
-        cmd = CMD_LOGIN_RESULT;
+        cmd = CMD_NEWLOGIN;
     }
     int sockId;
 };
+
 
 
 int procsocket(SOCKET _csock);
@@ -81,9 +99,12 @@ void cmdThread(SOCKET _sock);
 bool isRun = true;
 int main(int argc, char *argv[])
 {
+
+#ifdef _WIN32
     WORD ver = MAKEWORD(2,2);
     WSADATA data;
     WSAStartup(ver, &data);
+#endif
 
     //建立一个socket
     SOCKET _sock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
@@ -94,8 +115,14 @@ int main(int argc, char *argv[])
     //connect 连接服务器
     sockaddr_in _sin ={};
     _sin.sin_family = AF_INET;
+
+#ifdef _WIN32
     //我们自己的主机不止一个IP地址
     _sin.sin_addr.S_un.S_addr= inet_addr("127.0.0.1");   // INADDE_ANY 本机任何的地址都可以访问
+#else
+//    _sin.sin_addr.s_addr= inet_addr("192.168.199.103");
+    _sin.sin_addr.s_addr= inet_addr("127.0.0.1");
+#endif
     //主机的short 转换到网络中的类型
     _sin.sin_port=htons(9000);
 
@@ -116,7 +143,8 @@ int main(int argc, char *argv[])
         FD_ZERO(&fdReads);
         FD_SET(_sock,&fdReads);
         timeval t ={5,0};
-        int ret = select(_sock,&fdReads ,NULL ,NULL, &t);
+
+        int ret = select(_sock+1,&fdReads ,NULL ,NULL, &t);
         if(ret < 0)
         {
             printf("select err!!\n");
@@ -140,7 +168,13 @@ int main(int argc, char *argv[])
     }
 
     //关闭
+
+#ifdef _WIN32
     closesocket(_sock);
+    WSACleanup();
+#else
+    close(_sock);
+#endif
     getchar();
     return 0;
 }
@@ -165,22 +199,11 @@ void cmdThread(SOCKET _sock)
             strcpy(login.password,"123");
             send(_sock,(const char *)&login,sizeof(Login),0);
 
-            //接收消息
-            LoginResult ret={};
-            recv(_sock,(char *)&ret,sizeof(LoginResult),0);
-            printf("LoginResult = %d\n",ret.result);
-
         }else if(0 == strcmp(cmdBuf,"loginout"))
         {
             LoginOut login;
             strcpy(login.name,"gao");
             send(_sock,(const char *)&login,sizeof(LoginOut),0);
-
-            //接收消息
-            LoginOutResult ret={};
-            recv(_sock,(char *)&ret,sizeof(LoginOutResult),0);
-
-            printf("LoginOutResult = %d\n",ret.result);
 
         }else{
              printf("dont support CMD !!\n");
@@ -195,7 +218,7 @@ int procsocket(SOCKET _csock){
     char szRecv[1024]={};
 
     //5接受客户端的数据
-    int nlen =  recv(_csock,szRecv,sizeof(DataHeader),0);
+    int nlen =  (int)recv(_csock,szRecv,sizeof(DataHeader),0);
     DataHeader* header =(DataHeader*)szRecv;
 
     if(nlen<=0){
@@ -247,4 +270,6 @@ int procsocket(SOCKET _csock){
     default:
         break;
     }
+
+    return 0;
 }

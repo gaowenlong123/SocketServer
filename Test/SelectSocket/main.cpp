@@ -1,10 +1,22 @@
-#define WIN32_LEAN_AND_MEAN  //windows避免调用之前的宏定义，产生冲突
 #include <iostream>
 #include <vector>
 #include "algorithm"
 //windows
-#include <windows.h>  //windows系统头文件
-#include <winsock2.h>
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN  //windows避免调用之前的宏定义，产生冲突
+    #include <windows.h>  //windows系统头文件
+    #include <winsock2.h>
+
+#else
+    #include <unistd.h>
+    #include <arpa/inet.h>
+    #include <string.h>
+
+
+    #define SOCKET  int
+    #define INVALID_SOCKET (SOCKET)(~0)
+    #define SOCKET_ERROR           (-1)
+#endif
 
 using namespace std;
 
@@ -79,9 +91,11 @@ vector<SOCKET> g_clients;
 int procsocket(SOCKET _csock);
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
     WORD ver = MAKEWORD(2,2);
     WSADATA data;
     WSAStartup(ver, &data);
+#endif
 
     //建立一个socket
     SOCKET _sock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
@@ -89,8 +103,15 @@ int main(int argc, char *argv[])
     //bind 绑定用于接收客户端连接的网络端口
     sockaddr_in _sin ={};
     _sin.sin_family = AF_INET;
+
+#ifdef _WIN32
     //我们自己的主机不止一个IP地址
-    _sin.sin_addr.S_un.S_addr= inet_addr("192.168.199.103");   // INADDE_ANY 本机任何的地址都可以访问
+    _sin.sin_addr.S_un.S_addr= inet_addr("127.0.0.1");   // INADDE_ANY 本机任何的地址都可以访问
+#else
+//    _sin.sin_addr.s_addr= inet_addr("192.168.199.103");
+    _sin.sin_addr.s_addr= INADDR_ANY;
+#endif
+
     //主机的short 转换到网络中的类型
     _sin.sin_port=htons(9000);
 
@@ -120,15 +141,22 @@ int main(int argc, char *argv[])
         FD_SET(_sock,&fdRead);
         FD_SET(_sock,&fdWrite);
         FD_SET(_sock,&fdExp);
+        SOCKET maxSock = _sock;
 
         //每次查询以及连接的socket是否有数据需要查收
         for(int i=(int)g_clients.size()-1;i>=0 ;i--){
             FD_SET(g_clients[i],&fdRead);
+            if(maxSock < g_clients[i] )
+            {
+               maxSock = g_clients[i];
+            }
         }
 
         timeval t ={2,0};
 //        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,NULL);// 阻塞的模式满足应答的模式，如果需要服务端向客户端推送消息需要非阻塞
-        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&t);   //查询没有数据，等t时间后离开
+
+        //all socket +1
+        int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,&t);   //查询没有数据，等t时间后离开
 
         if(ret < 0)
         {
@@ -144,7 +172,11 @@ int main(int argc, char *argv[])
             sockaddr_in clientAddr ={};
             SOCKET _csock = INVALID_SOCKET;
             int len = sizeof(clientAddr);
+#ifdef _WIN32
             _csock = accept(_sock,(sockaddr*)&clientAddr,(int*)&len);
+#else
+            _csock = accept(_sock,(sockaddr*)&clientAddr,(socklen_t *)&len);
+#endif
             if(_csock == INVALID_SOCKET)
             {      printf("accept port err!!\n");
             }
@@ -162,8 +194,8 @@ int main(int argc, char *argv[])
         }
 
         //循环处理加入监听的sock
+#ifdef _WIN32
         for(size_t i=0;i< fdRead.fd_count ;i++){
-
             //如果sock客户端退出
             if(-1==procsocket(fdRead.fd_array[i]))
             {
@@ -174,20 +206,47 @@ int main(int argc, char *argv[])
             }
 
         }
+#else
+
+        for(int i=(int)g_clients.size()-1;i>=0 ;i--){
+            if(FD_ISSET(g_clients[i],&fdRead))
+            {
+                //如果sock客户端退出
+                if(-1==procsocket(g_clients[i]))
+                {
+
+                    auto iter = g_clients.begin() + i; // std::vector<SOCKET>::iterator
+                    if(iter != g_clients.end()){
+                        g_clients.erase(iter);
+                    }
+                }
+            }
+
+        }
+#endif
+
+
 
 //        cout << "Server have time to do something123 !" << endl;
     }
 
     //关闭
+#ifdef _WIN32
     for(int  i=(int)g_clients.size()-1;i>=0 ;i--){
 
         closesocket(g_clients[i]);
     }
 
     closesocket(_sock);
-
-
     WSACleanup();
+
+#else
+    for(int i=(int)g_clients.size()-1;i>=0 ;i--){
+
+        close(g_clients[i]);
+    }
+    close(_sock);
+#endif
     getchar();
     cout << "Hello World123!" << endl;
     return 0;
@@ -200,7 +259,7 @@ int procsocket(SOCKET _csock){
     char szRecv[1024]={};
 
     //5接受客户端的数据
-    int nlen =  recv(_csock,szRecv,sizeof(DataHeader),0);
+    int nlen =  (int)recv(_csock,szRecv,sizeof(DataHeader),0);
     DataHeader* header =(DataHeader*)szRecv;
 
     if(nlen<=0){
@@ -250,6 +309,8 @@ int procsocket(SOCKET _csock){
         send(_csock,(char*)&headererr,sizeof(DataHeader),0);
         break;
     }
+
+    return 0;
 }
 
 

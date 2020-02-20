@@ -5,8 +5,10 @@ CONFIG -= qt
 
 
 #windows
-LIBS+=libws2_32
+#LIBS+=libws2_32
 
+#linux
+LIBS += -lpthread
 
 
 SOURCES += main.cpp
