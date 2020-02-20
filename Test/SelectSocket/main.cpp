@@ -13,6 +13,7 @@ enum CMD{
     CMD_LOGIN_RESULT,
     CMD_LOGINOUT,
     CMD_LOGINOUT_RESULT,
+    CMD_NEWLOGIN,
     CMD_Err,
 };
 
@@ -38,7 +39,7 @@ struct LoginResult:public DataHeader
 {
     LoginResult(){
         datalength = sizeof(LoginResult);
-        cmd = CMD_LOGIN_RESULT;
+        cmd = CMD_NEWLOGIN;
     }
     int result;
 };
@@ -63,6 +64,16 @@ struct LoginOutResult:public DataHeader
 
     int result;
 };
+
+struct NewLogin:public DataHeader
+{
+    NewLogin(){
+        datalength = sizeof(NewLogin);
+        cmd = CMD_LOGIN_RESULT;
+    }
+    int sockId;
+};
+
 
 vector<SOCKET> g_clients;
 int procsocket(SOCKET _csock);
@@ -97,8 +108,6 @@ int main(int argc, char *argv[])
     }
 
 
-
-
     while (true){
         fd_set fdRead;
         fd_set fdWrite;
@@ -117,7 +126,10 @@ int main(int argc, char *argv[])
             FD_SET(g_clients[i],&fdRead);
         }
 
-        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,NULL);
+        timeval t ={2,0};
+//        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,NULL);// 阻塞的模式满足应答的模式，如果需要服务端向客户端推送消息需要非阻塞
+        int ret = select(_sock+1,&fdRead,&fdWrite,&fdExp,&t);   //查询没有数据，等t时间后离开
+
         if(ret < 0)
         {
             printf("select err!!\n");
@@ -137,9 +149,15 @@ int main(int argc, char *argv[])
             {      printf("accept port err!!\n");
             }
 
+            for(int i=(int)g_clients.size()-1;i>=0 ;i--){
+                NewLogin newlogin ;
+                send(g_clients[i],(const char*)&newlogin,sizeof(NewLogin),0);
+            }
 
-            printf("new client append : Socket=%d ;IP = %s \n",(int)_csock,inet_ntoa(clientAddr.sin_addr));
             g_clients.push_back(_csock);
+            printf("new client append : Socket=%d ;IP = %s \n",(int)_csock,inet_ntoa(clientAddr.sin_addr));
+
+
 
         }
 
@@ -157,8 +175,7 @@ int main(int argc, char *argv[])
 
         }
 
-
-
+        cout << "Server have time to do something123 !" << endl;
     }
 
     //关闭
