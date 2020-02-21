@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
 #ifdef _WIN32
     //我们自己的主机不止一个IP地址
-    _sin.sin_addr.S_un.S_addr= inet_addr("127.0.0.1");   // INADDE_ANY 本机任何的地址都可以访问
+    _sin.sin_addr.S_un.S_addr= inet_addr("192.168.199.103");   // INADDE_ANY 本机任何的地址都可以访问
 #else
 //    _sin.sin_addr.s_addr= inet_addr("192.168.199.103");
     _sin.sin_addr.s_addr= INADDR_ANY;
@@ -282,7 +282,7 @@ int procsocket(SOCKET _csock){
         Login* login =(Login*)szRecv;
 
         //判断账号密码是否正确
-        printf("Server recv cmd=CMD_LOGIN ; username= %s ; length=%d",login->name ,login->datalength);
+        printf("Server recv cmd=CMD_LOGIN ; username= %s ; length=%d\n",login->name ,login->datalength);
 
         LoginResult ret;
         ret.result = 1;
@@ -296,7 +296,7 @@ int procsocket(SOCKET _csock){
         //判断账号密码是否正确
 
         LoginOut* loginout =(LoginOut*)szRecv;
-        printf("Server recv cmd=CMD_LOGINOUT ; username= %s ; length=%d",loginout->name ,loginout->datalength);
+        printf("Server recv cmd=CMD_LOGINOUT ; username= %s ; length=%d \n",loginout->name ,loginout->datalength);
 
         LoginOutResult outret;
         outret.result = 1;
