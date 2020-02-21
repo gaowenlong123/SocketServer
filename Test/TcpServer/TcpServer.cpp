@@ -124,7 +124,7 @@ SOCKET TcpServer::socketAccept()
         newlogin.sockId = _csock;
         SendDataToAll((DataHeader* )&newlogin);
 
-        g_clients.push_back(_csock);
+        m_clients.push_back(new ClientSocket(_csock));
         printf("new client append : Socket=%d ;IP = %s \n",(int)_csock,inet_ntoa(clientAddr.sin_addr));
     }
 
@@ -137,22 +137,28 @@ void TcpServer::Close()
     if(m_sock != INVALID_SOCKET)
     {
 #ifdef _WIN32
-    for(int  i=(int)g_clients.size()-1;i>=0 ;i--){
+    for(int  i=(int)m_clients.size()-1;i>=0 ;i--){
 
-        closesocket(g_clients[i]);
+        closesocket(m_clients[i]->m_sockfd);
+         delete m_clients[i];
     }
 
     closesocket(m_sock);
     WSACleanup();
 
 #else
-    for(int i=(int)g_clients.size()-1;i>=0 ;i--){
+    for(int i=(int)m_clients.size()-1;i>=0 ;i--){
 
-        close(g_clients[i]);
+        close(m_clients[i]->m_sockfd);
+        delete m_clients[i];
     }
     close(m_sock);
 #endif
         m_sock =INVALID_SOCKET;
+
+
+        m_clients.clear();
+
     }
 
 }
@@ -175,11 +181,11 @@ bool TcpServer::OnRun()
         SOCKET maxSock = m_sock;
 
         //每次查询以及连接的socket是否有数据需要查收
-        for(int i=(int)g_clients.size()-1;i>=0 ;i--){
-            FD_SET(g_clients[i],&fdRead);
-            if(maxSock < g_clients[i] )
+        for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+            FD_SET(m_clients[i]->m_sockfd,&fdRead);
+            if(maxSock < m_clients[i]->m_sockfd )
             {
-               maxSock = g_clients[i];
+               maxSock = m_clients[i]->m_sockfd;
             }
         }
 
@@ -205,16 +211,16 @@ bool TcpServer::OnRun()
         }
 
         //循环处理加入监听的sock
-        for(int i=(int)g_clients.size()-1;i>=0 ;i--){
-            if(FD_ISSET(g_clients[i],&fdRead))
+        for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+            if(FD_ISSET(m_clients[i]->m_sockfd,&fdRead))
             {
                 //如果sock客户端退出
-                if(-1==RecvData(g_clients[i]))
+                if(-1==RecvData(m_clients[i]))
                 {
 
-                    auto iter = g_clients.begin() + i; // std::vector<SOCKET>::iterator
-                    if(iter != g_clients.end()){
-                        g_clients.erase(iter);
+                    auto iter = m_clients.begin() + i; // std::vector<SOCKET>::iterator
+                    if(iter != m_clients.end()){
+                        m_clients.erase(iter);
                     }
                 }
             }
@@ -233,28 +239,44 @@ bool TcpServer::isRun()
     return m_sock != INVALID_SOCKET ;
 }
 
-int TcpServer::RecvData(SOCKET _csock)
+int TcpServer::RecvData(ClientSocket* pclient)
 {
-    //缓冲区
-    char szRecv[1024]={};
 
-    //5接受客户端的数据
-    int nlen =  (int)recv(_csock,szRecv,sizeof(DataHeader),0);
-    DataHeader* header =(DataHeader*)szRecv;
+    //5接受数据
+    int nlen =  (int)recv(pclient->m_sockfd,m_szRecv,RECV_BUFF_SIZE,0);
 
-    if(nlen<=0){
-        printf("client quit!!\n");
-        return -1;
+    // recvbuf ==> msgbuf
+    memcpy(pclient->msgBuf() + pclient->getlastMsgPos(),m_szRecv,nlen);
+
+
+    pclient->setlastMsgPos(pclient->getlastMsgPos()+nlen);
+
+    //是否粘包
+    while(pclient->getlastMsgPos() >= sizeof(DataHeader)){
+
+         //是否少包
+        //recv data size out of  DataHeader's size ==>  get DataHeader
+        if (pclient->getlastMsgPos()  >=  sizeof(DataHeader))
+        {
+            DataHeader* header =(DataHeader*)pclient->msgBuf();
+
+            if(pclient->getlastMsgPos() >= header->datalength)
+            {
+                int nSize =  pclient->getlastMsgPos() - header->datalength;
+
+                OnNetMsg(pclient->m_sockfd ,header);
+
+                //move pointer to unuse data
+                memcpy(pclient->msgBuf()  , pclient->msgBuf() + header->datalength , nSize);
+
+                pclient->setlastMsgPos(nSize);
+            }
+        }else {
+            break;
+        }
     }
 
-    //是否粘包 或者少包
-    if(nlen >= sizeof(DataHeader)){
 
-    }
-
-    //没有拿完值，就在缓冲区中偏移指针
-    recv(_csock,szRecv + sizeof(DataHeader),header->datalength- sizeof(DataHeader),0);
-    OnNetMsg(_csock ,header);
     return 0;
 
 }
@@ -290,9 +312,16 @@ void TcpServer::OnNetMsg(SOCKET _csock ,DataHeader* header)
         SendData(_csock,(DataHeader*) &outret);
     }
         break;
+
+    case CMD_Err:
+    {
+        DataHeader headererr;
+        SendData(_csock,(DataHeader*) &headererr);
+    }
+        break;
     default:
-        DataHeader headererr = {0,CMD_Err};
-        SendData(_csock,(DataHeader*) &headererr);        break;
+        printf("server recv cmd=UnDefine \n");
+        break;
     }
 
 }
@@ -308,8 +337,8 @@ int TcpServer::SendData(SOCKET _csock ,DataHeader* header)
 
 void TcpServer::SendDataToAll(DataHeader* header)
 {
-    for(int i=(int)g_clients.size()-1;i>=0 ;i--){
-        SendData(g_clients[i],header);
+    for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+        SendData(m_clients[i]->m_sockfd,header);
     }
 }
 

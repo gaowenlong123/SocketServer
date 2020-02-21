@@ -2,6 +2,10 @@
 #define MESSAGEHEADER_H
 
 
+#define RECV_BUFF_SIZE 10240 //10k
+
+
+
 enum CMD{
     CMD_LOGIN,
     CMD_LOGIN_RESULT,
@@ -13,6 +17,10 @@ enum CMD{
 
 struct DataHeader
 {
+    DataHeader(){
+        datalength = sizeof(DataHeader);
+    }
+
     short datalength;
     short cmd;
 };

@@ -2,6 +2,7 @@
 #define TCPSERVER_H
 #ifdef _WIN32
     //windows
+    #define FD_SETSIZE  1024
     #define WIN32_LEAN_AND_MEAN  //windows避免调用之前的宏定义，产生冲突
     #include <windows.h>  //windows系统头文件
     #include <winsock2.h>
@@ -18,7 +19,7 @@
 #endif
 
 #include "MessageHeader.h"
-
+#include "ClientSocket.h"
 #include <iostream>
 #include <vector>
 #include <stdio.h>
@@ -47,7 +48,7 @@ public:
 
     bool isRun();
 
-    int RecvData(SOCKET _csock);
+    int RecvData(ClientSocket* _csock);
 
     virtual void OnNetMsg(SOCKET _csock ,DataHeader* header);
 
@@ -60,9 +61,15 @@ private:
 
     SOCKET m_sock;
 
-    vector<SOCKET> g_clients;
+    vector<ClientSocket*> m_clients;
 
+    //缓冲区
+    char m_szRecv[RECV_BUFF_SIZE]={};
 
+    //msg缓冲区
+//    char m_szMsgBuff[RECV_BUFF_SIZE*10]={};
+
+//    int m_lastMsgPos = 0;
 
 private:
 

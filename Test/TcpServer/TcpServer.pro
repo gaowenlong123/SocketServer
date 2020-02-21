@@ -16,4 +16,5 @@ SOURCES += main.cpp \
 
 HEADERS += \
     TcpServer.h \
-    MessageHeader.h
+    MessageHeader.h \
+    ClientSocket.h

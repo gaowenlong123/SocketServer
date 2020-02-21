@@ -108,6 +108,7 @@ bool TcpClient::OnRun(){
         if(ret < 0)
         {
             printf("select err!!\n");
+            Close();
             return false;
         }
 
@@ -117,8 +118,9 @@ bool TcpClient::OnRun(){
 
             if(-1 ==RecvData(m_sock))
             {
-                 printf(" client select quit!!\n");
-                 return false;
+                printf(" client select quit!!\n");
+                Close();
+                return false;
             }
         }
 
@@ -137,27 +139,44 @@ bool TcpClient::isRun()
 }
 
 
-int  TcpClient::RecvData(SOCKET _csock){
-    //缓冲区
-    char szRecv[1024]={};
+int  TcpClient::RecvData(SOCKET csock){
 
-    //5接受客户端的数据
-    int nlen =  (int)recv(_csock,szRecv,sizeof(DataHeader),0);
-    DataHeader* header =(DataHeader*)szRecv;
+    //5接受数据
+    int nlen =  (int)recv(csock,m_szRecv,RECV_BUFF_SIZE,0);
 
     if(nlen<=0){
         printf("client server quit!!\n");
         return -1;
     }
 
-    //是否粘包 或者少包
-    if(nlen >= sizeof(DataHeader)){
+    // recvbuf ==> msgbuf
+    memcpy(m_szMsgBuff + m_lastMsgPos,m_szRecv,nlen);
 
+    m_lastMsgPos+=nlen;
+
+    //是否粘包
+    while(m_lastMsgPos >= sizeof(DataHeader)){
+
+         //是否少包
+        //recv data size out of  DataHeader's size ==>  get DataHeader
+        if (m_lastMsgPos  >=  sizeof(DataHeader))
+        {
+            DataHeader* header =(DataHeader*)m_szMsgBuff;
+            if(m_lastMsgPos >= header->datalength)
+            {
+                int nSize =  m_lastMsgPos - header->datalength;
+
+                OnNetMsg(header);
+
+                //move pointer to unuse data
+                memcpy(m_szMsgBuff , m_szMsgBuff + header->datalength , m_lastMsgPos - header->datalength);
+                m_lastMsgPos =nSize;
+            }
+        }else {
+            break;
+        }
     }
 
-    //没有拿完值，就在缓冲区中偏移指针
-    recv(_csock,szRecv + sizeof(DataHeader),header->datalength- sizeof(DataHeader),0);
-    OnNetMsg(header);
     return 0;
 }
 
@@ -184,7 +203,7 @@ void TcpClient::OnNetMsg(DataHeader* header)
         //判断账号密码是否正确
 
         LoginOutResult* loginout =(LoginOutResult*)header;
-        printf("Server recv cmd=CMD_LOGINOUT_RESULT ; Result=%d\n" ,loginout->result);
+        printf("cilent recv cmd=CMD_LOGINOUT_RESULT ; Result=%d\n" ,loginout->result);
 
     }
         break;
@@ -194,10 +213,16 @@ void TcpClient::OnNetMsg(DataHeader* header)
         //判断账号密码是否正确
 
         NewLogin* newLogin =(NewLogin*)header;
-        printf("Server recv cmd=CMD_NEWLOGIN ; new SOCKID=%d\n" ,newLogin->sockId);
+        printf("cilent recv cmd=CMD_NEWLOGIN ; new SOCKID=%d\n" ,newLogin->sockId);
     }
         break;
+    case CMD_Err:
+    {
+        printf("cilent recv cmd=CMD_Err ; datalength=%d\n" ,header->datalength);
+    }
+    break;
     default:
+         printf("cilent recv cmd=UnDefine \n");
         break;
     }
 

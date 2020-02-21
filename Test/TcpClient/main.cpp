@@ -10,7 +10,8 @@ int main(int argc, char *argv[])
     TcpClient client;
 
     client.initSocket();
-    if(-1==client.Connect("192.168.199.103",9000)){
+    //192.168.199.103
+    if(-1==client.Connect("127.0.0.1",9000)){
         return -1;
     }
 

@@ -46,6 +46,13 @@ private:
 
     SOCKET m_sock;
 
+    //缓冲区
+    char m_szRecv[RECV_BUFF_SIZE]={};
+
+    //msg缓冲区
+    char m_szMsgBuff[RECV_BUFF_SIZE*10]={};
+
+    int m_lastMsgPos = 0;
 };
 
 
