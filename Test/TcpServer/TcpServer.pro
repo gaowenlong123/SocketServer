@@ -5,10 +5,10 @@ CONFIG -= qt
 
 
 #windows
-#LIBS+=libws2_32
+LIBS+=libws2_32
 
 #linux
-LIBS += -lpthread
+#LIBS += -lpthread
 
 
 SOURCES += main.cpp \
@@ -17,4 +17,5 @@ SOURCES += main.cpp \
 HEADERS += \
     TcpServer.h \
     MessageHeader.h \
-    ClientSocket.h
+    ClientSocket.h \
+    CELLTimestamp.h

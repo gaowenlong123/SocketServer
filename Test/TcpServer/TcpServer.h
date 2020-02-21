@@ -20,6 +20,8 @@
 
 #include "MessageHeader.h"
 #include "ClientSocket.h"
+#include "celltimestamp.h"
+
 #include <iostream>
 #include <vector>
 #include <stdio.h>
@@ -65,6 +67,12 @@ private:
 
     //缓冲区
     char m_szRecv[RECV_BUFF_SIZE]={};
+
+    //计时器
+    CELLTimestamp m_tTime;
+
+    //计数
+    int m_recvCount;
 
     //msg缓冲区
 //    char m_szMsgBuff[RECV_BUFF_SIZE*10]={};

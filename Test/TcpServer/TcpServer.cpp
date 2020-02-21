@@ -5,6 +5,7 @@
 TcpServer::TcpServer()
 {
     m_sock =INVALID_SOCKET;
+    m_recvCount =0;
 }
 
 TcpServer::~TcpServer()
@@ -217,7 +218,6 @@ bool TcpServer::OnRun()
                 //如果sock客户端退出
                 if(-1==RecvData(m_clients[i]))
                 {
-
                     auto iter = m_clients.begin() + i; // std::vector<SOCKET>::iterator
                     if(iter != m_clients.end()){
                         m_clients.erase(iter);
@@ -283,6 +283,17 @@ int TcpServer::RecvData(ClientSocket* pclient)
 
 void TcpServer::OnNetMsg(SOCKET _csock ,DataHeader* header)
 {
+    //为了测试性能，进行输出响应时间
+    m_recvCount ++ ;
+    auto t1 = m_tTime.getElapsedSecond();
+    if(m_tTime.getElapsedSecond() >=1.0)
+    {
+        printf("time<%lf> , socket<%d> , m_recvCount<%d> ",t1 ,_csock ,m_recvCount);
+        m_tTime.update();
+    }
+
+
+    //处理请求
     if(!header)
     {
          printf("header is empty");
