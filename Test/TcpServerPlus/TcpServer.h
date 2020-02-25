@@ -10,7 +10,7 @@
 #include "MessageHeader.h"
 #include "ClientSocket.h"
 #include "celltimestamp.h"
-#include "cellserver.h"
+#include "CellServer.h"
 #include "inetevent.h"
 #include "iostream"
 
@@ -18,7 +18,7 @@
 
 #define _CELL_THREAD_COUNT 4
 
-
+using namespace std;
 
 class TcpServer : public INetEvent
 {

@@ -1,9 +1,10 @@
-#include <cellserver.h>
+#include "CellServer.h"
 
 CellServer::CellServer(SOCKET sock)
 {
     m_sock = sock;
     m_pNetEvent = nullptr;
+    count = 1;
 }
 
 
@@ -17,7 +18,7 @@ CellServer::~CellServer()
 void CellServer::Start()
 {
     m_pthread = std::thread(std::mem_fn(&CellServer::OnRun) ,this);
-//    m_pthread.detach();
+    m_pthread.detach();
 }
 
 
@@ -112,52 +113,86 @@ bool CellServer::isRun()
     return m_sock != INVALID_SOCKET ;
 }
 
+
 int CellServer::RecvData(ClientSocket* pclient)
 {
 
-    //5接受数据
-    int nlen =  (int)recv(pclient->m_sockfd,m_szRecv,RECV_BUFF_SIZE,0);
+//    //5接受数据
+//    int nlen =  (int)recv(pclient->m_sockfd,m_szRecv,RECV_BUFF_SIZE,0);
 
-    if(nlen <= 0)
+//    if(nlen <= 0)
+//    {
+//        printf("client <%d> quit \n",pclient->m_sockfd);
+//        return -1;
+//    }
+
+//    // recvbuf ==> msgbuf
+//    memcpy(pclient->msgBuf() + pclient->getlastMsgPos(),m_szRecv,nlen);
+
+
+//    pclient->setlastMsgPos(pclient->getlastMsgPos()+nlen);
+
+//    //是否粘包
+//    while(pclient->getlastMsgPos() >= sizeof(DataHeader)){
+
+//                printf("RecvData::<%d> \n",(int)pclient->getlastMsgPos());
+//         //是否少包
+//        //recv data size out of  DataHeader's size ==>  get DataHeader
+//        if (pclient->getlastMsgPos()  >=  sizeof(DataHeader))
+//        {
+//            DataHeader* header =(DataHeader*)pclient->msgBuf();
+
+//            if(pclient->getlastMsgPos() >= header->datalength)
+//            {
+//                int nSize =  pclient->getlastMsgPos() - header->datalength;
+
+//                OnNetMsg(pclient->m_sockfd ,header);
+
+//                //move pointer to unuse data
+//                memcpy(pclient->msgBuf()  , pclient->msgBuf() + header->datalength , nSize);
+
+//                pclient->setlastMsgPos(nSize);
+//            }
+//        }else {
+//            break;
+//        }
+//    }
+
+    char* szRecv = pclient->msgBuf() + pclient->getlastMsgPos();
+    int nLen = (int)recv(pclient->m_sockfd, szRecv, (RECV_BUFF_SIZE)- pclient->getlastMsgPos(), 0);
+
+    //printf("nLen=%d\n", nLen);
+    if (nLen <= 0)
     {
         printf("client <%d> quit \n",pclient->m_sockfd);
         return -1;
     }
 
-    // recvbuf ==> msgbuf
-    memcpy(pclient->msgBuf() + pclient->getlastMsgPos(),m_szRecv,nlen);
+    pclient->setlastMsgPos(pclient->getlastMsgPos() + nLen);
 
 
-    pclient->setlastMsgPos(pclient->getlastMsgPos()+nlen);
+    while (pclient->getlastMsgPos() >= sizeof(DataHeader))
+    {
 
-    //是否粘包
-    while(pclient->getlastMsgPos() >= sizeof(DataHeader)){
+        DataHeader* header = (DataHeader*)pclient->msgBuf();
 
-         //是否少包
-        //recv data size out of  DataHeader's size ==>  get DataHeader
-        if (pclient->getlastMsgPos()  >=  sizeof(DataHeader))
+        if (pclient->getlastMsgPos() >= header->datalength)
         {
-            DataHeader* header =(DataHeader*)pclient->msgBuf();
 
-            if(pclient->getlastMsgPos() >= header->datalength)
-            {
-                int nSize =  pclient->getlastMsgPos() - header->datalength;
+            int nSize = pclient->getlastMsgPos() - header->datalength;
 
-                OnNetMsg(pclient->m_sockfd ,header);
+            OnNetMsg(pclient->m_sockfd, header);
 
-                //move pointer to unuse data
-                memcpy(pclient->msgBuf()  , pclient->msgBuf() + header->datalength , nSize);
+            memcpy(pclient->msgBuf(), pclient->msgBuf() + header->datalength, nSize);
 
-                pclient->setlastMsgPos(nSize);
-            }
-        }else {
+            pclient->setlastMsgPos(nSize);
+        }
+        else {
+
             break;
         }
     }
-
-
     return 0;
-
 }
 
 void CellServer::OnNetMsg(SOCKET _csock ,DataHeader* header)
@@ -277,3 +312,4 @@ void CellServer::setEventOj(INetEvent* event)
 {
     m_pNetEvent = event;
 }
+

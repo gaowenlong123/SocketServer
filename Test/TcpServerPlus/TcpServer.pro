@@ -13,7 +13,7 @@ LIBS += -lpthread
 
 SOURCES += main.cpp \
     TcpServer.cpp \
-    cellserver.cpp
+    CellServer.cpp
 
 HEADERS += \
     TcpServer.h \
@@ -21,6 +21,6 @@ HEADERS += \
     ClientSocket.h \
     CELLTimestamp.h \
     INetEvent.h \
-    cellserver.h \
     inetevent.h \
-    celltimestamp.h
+    celltimestamp.h \
+    CellServer.h

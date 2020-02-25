@@ -227,7 +227,6 @@ bool TcpServer::OnRun()
         if(FD_ISSET(m_sock,&fdRead))
         {
             FD_CLR(m_sock,&fdRead);
-             printf("clientquit \n");
             socketAccept();
         }
         return true;

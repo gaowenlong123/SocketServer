@@ -64,6 +64,8 @@ private:
 
     INetEvent* m_pNetEvent;
 
+    std::atomic_uint  count ;
+
 };
 
 #endif // CELLSERVER_H

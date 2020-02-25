@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     server.initBind("127.0.0.1",9001);
     server.initListen(5);
     server.startServerThread();
-    server.socketAccept();
+//    server.socketAccept();
 
 
     while(server.isRun()){
