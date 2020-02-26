@@ -6,11 +6,16 @@ class INetEvent
 {
 public:
 
+    virtual void OnNetJoin(ClientSocket* pClient)=0;
+
     //客户端离开事件
-    virtual void OnLeave(ClientSocket* pClient) = 0 ;
+    virtual void OnNetLeave(ClientSocket* pClient) = 0 ;
 
     //客户端消息事件
-    virtual void OnNetMsg(SOCKET cSock, DataHeader* header)=0;
+    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header)=0;
+
+
+    virtual void OnNetRecv(ClientSocket* pClient) = 0;
 };
 
 #endif // INETEVENT_H

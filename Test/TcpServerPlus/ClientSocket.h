@@ -33,6 +33,14 @@ public:
         m_lastMsgPos = pos;
     }
 
+    int SendData(DataHeader* header)
+    {
+        if(header)
+        {
+            return send(m_sockfd , (const char*)header , header->datalength,0);
+        }
+    }
+
 
     SOCKET m_sockfd;
 

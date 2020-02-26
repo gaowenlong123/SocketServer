@@ -31,11 +31,7 @@ public:
 
     int RecvData(ClientSocket* pclient);
 
-    void OnNetMsg(SOCKET _csock ,DataHeader* header);
-
-    int SendData(SOCKET _csock ,DataHeader* header);
-
-    void SendDataToAll(DataHeader* header);
+    void OnNetMsg(ClientSocket* pClient, DataHeader* header);
 
     void Close();
 
@@ -44,6 +40,11 @@ public:
     size_t getClientSize();
 
     void setEventOj(INetEvent* event);
+
+    //?????
+    int SendData(SOCKET _csock ,DataHeader* header);
+
+    void SendDataToAll(DataHeader* header);
 
 
 private:

@@ -13,19 +13,6 @@ TcpServer::~TcpServer()
     Close();
 }
 
-
-void TcpServer::OnLeave(ClientSocket* pClient)
-{
-    _clentsCount--;
-}
-
-void TcpServer::OnNetMsg(SOCKET cSock, DataHeader* header)
-{
-    _recvCount++;
-}
-
-
-
 int TcpServer::initSocket()
 {
     if(m_sock != INVALID_SOCKET)
@@ -170,8 +157,9 @@ void TcpServer::timeForMsg()
     auto t1 = m_tTime.getElapsedSecond();
     if(t1 >=1.0)
     {
-        printf("time<%lf> , socket<%d> ,clents<%d>, m_recvCount<%d> \n",t1 ,m_sock , (int)_clentsCount ,(int)(_recvCount/t1));
+        printf("time<%lf> , socket<%d> ,clents<%d>, m_recvCount<%d>  _msgCount<%d>\n",t1 ,m_sock , (int)_clentsCount ,(int)(_recvCount/t1) ,(int)_msgCount);
         _recvCount =0;
+        _msgCount = 0;
         m_tTime.update();
     }
 }

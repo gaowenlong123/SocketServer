@@ -10,7 +10,7 @@ void sendThread(int id);
 bool g_bRun = true;
 
 //客户端数量
-const int cCount = 10;
+const int cCount = 4;
 
 //线程数量
 const int tCount = 4;

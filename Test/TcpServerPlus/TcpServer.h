@@ -51,10 +51,14 @@ public:
 
     void Close();
 
-    virtual void OnLeave(ClientSocket* pClient);
+//    virtual void OnNetLeave(ClientSocket* pClient){}
 
-     virtual void OnNetMsg(SOCKET cSock, DataHeader* header);
 
+//    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header){}
+
+//    virtual void OnNetJoin(ClientSocket* pClient){}
+
+//    virtual void OnNetRecv(ClientSocket* pClient){}
 
 //    int RecvData(ClientSocket* _csock);
 
@@ -62,6 +66,11 @@ public:
 
 
 
+
+    //计数
+    std::atomic_int _recvCount;
+    std::atomic_int _clentsCount;
+    std::atomic_int _msgCount;
 
 
 private:
@@ -84,9 +93,6 @@ private:
 
     //    int m_lastMsgPos = 0;
 
-    //计数
-    std::atomic_int _recvCount;
-    std::atomic_int _clentsCount;
 };
 
 #endif // TCPSERVER_H

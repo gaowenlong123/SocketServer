@@ -23,4 +23,5 @@ HEADERS += \
     INetEvent.h \
     inetevent.h \
     celltimestamp.h \
-    CellServer.h
+    CellServer.h \
+    myserver.h

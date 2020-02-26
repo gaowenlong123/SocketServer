@@ -1,5 +1,5 @@
 #include "CellServer.h"
-
+#include "iostream"
 CellServer::CellServer(SOCKET sock)
 {
     m_sock = sock;
@@ -25,9 +25,14 @@ void CellServer::Start()
 //只用来读取客户端发来的数据
 bool CellServer::OnRun()
 {
+    fd_set _fdead_back;
+    bool _clients_change;
+    SOCKET maxSock ;
+
+    _clients_change = true;
+
     while(isRun())
     {
-
 
         if(m_clientsBuff.size() > 0)
         {
@@ -38,6 +43,7 @@ bool CellServer::OnRun()
             }
 
             m_clientsBuff.clear();
+            _clients_change = true;
         }
 
         //如果没有客户端，跳出
@@ -49,26 +55,41 @@ bool CellServer::OnRun()
             continue ;
         }
 
+
         fd_set fdRead;
         FD_ZERO(&fdRead);
-
 //        这个是主线程再操作的socket，所以不需要读
-            FD_SET(m_sock,&fdRead);
+        FD_SET(m_sock,&fdRead);
 
-        SOCKET maxSock = m_clients[0]->m_sockfd;
 
-//        每次查询以及连接的socket是否有数据需要查收
-        for(int i=(int)m_clients.size()-1;i>=0 ;i--){
 
-            FD_SET(m_clients[i]->m_sockfd,&fdRead);
+        if(_clients_change)
+        {
 
-            if(maxSock < m_clients[i]->m_sockfd )
-            {
-               maxSock = m_clients[i]->m_sockfd;
-            }
+           maxSock = m_clients[0]->m_sockfd;
+
+           //        每次查询以及连接的socket是否有数据需要查收
+           for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+
+               FD_SET(m_clients[i]->m_sockfd,&fdRead);
+
+               if(maxSock < m_clients[i]->m_sockfd )
+               {
+                   maxSock = m_clients[i]->m_sockfd;
+               }
+           }
+
+            memcpy(&_fdead_back, &fdRead  ,sizeof(fd_set));
+           _clients_change = false;
+
+        }
+        else {
+
+            memcpy(&fdRead , &_fdead_back ,sizeof(fd_set));
         }
 
-        timeval t ={0,100};
+
+        timeval t ={0,0};
 
         //all socket +1
         int ret = select(maxSock+1,&fdRead,nullptr,nullptr,&t);   //查询没有数据，等t时间后离开
@@ -77,6 +98,9 @@ bool CellServer::OnRun()
             printf("select err!!\n");
             Close();
             return false;
+        }
+        else if (ret == 0) {
+            continue;
         }
 
 
@@ -93,8 +117,10 @@ bool CellServer::OnRun()
 
                         //退出事件
                         if(m_pNetEvent){
-                             m_pNetEvent->OnLeave(m_clients[i]);
+                             m_pNetEvent->OnNetLeave(m_clients[i]);
                         }
+
+                        _clients_change = true;
 
                         delete m_clients[i];
                         m_clients.erase(iter);
@@ -161,7 +187,9 @@ int CellServer::RecvData(ClientSocket* pclient)
     char* szRecv = pclient->msgBuf() + pclient->getlastMsgPos();
     int nLen = (int)recv(pclient->m_sockfd, szRecv, (RECV_BUFF_SIZE)- pclient->getlastMsgPos(), 0);
 
-    //printf("nLen=%d\n", nLen);
+    //recv jishu
+    m_pNetEvent->OnNetRecv(pclient);
+
     if (nLen <= 0)
     {
         printf("client <%d> quit \n",pclient->m_sockfd);
@@ -170,10 +198,9 @@ int CellServer::RecvData(ClientSocket* pclient)
 
     pclient->setlastMsgPos(pclient->getlastMsgPos() + nLen);
 
-
+    count ++;
     while (pclient->getlastMsgPos() >= sizeof(DataHeader))
     {
-
         DataHeader* header = (DataHeader*)pclient->msgBuf();
 
         if (pclient->getlastMsgPos() >= header->datalength)
@@ -181,7 +208,7 @@ int CellServer::RecvData(ClientSocket* pclient)
 
             int nSize = pclient->getlastMsgPos() - header->datalength;
 
-            OnNetMsg(pclient->m_sockfd, header);
+            OnNetMsg(pclient, header);
 
             memcpy(pclient->msgBuf(), pclient->msgBuf() + header->datalength, nSize);
 
@@ -195,71 +222,12 @@ int CellServer::RecvData(ClientSocket* pclient)
     return 0;
 }
 
-void CellServer::OnNetMsg(SOCKET _csock ,DataHeader* header)
+void CellServer::OnNetMsg(ClientSocket* pClient, DataHeader* header)
 {
     //计数
-    m_pNetEvent->OnNetMsg(_csock,header);
-
-    //处理请求
-    if(!header)
-    {
-         printf("header is empty");
-    }
-    // 6处理请求
-    switch (header->cmd) {
-    case CMD_LOGIN:
-    {
-        Login* login = (Login*)header;
-        //判断账号密码是否正确
-//            printf("Server recv cmd=CMD_LOGIN ; username= %s ; length=%d\n",login->name ,login->datalength);
-
-        LoginResult ret;
-        ret.result = 1;
-        SendData(_csock,(DataHeader*) &ret);
-
-    }
-        break;
-    case CMD_LOGINOUT:
-    {
-        LoginOut* loginout = (LoginOut*)header;
-        //判断账号密码是否正确
-//        printf("Server recv cmd=CMD_LOGINOUT ; username= %s ; length=%d\n",loginout->name ,loginout->datalength);
-
-        LoginOutResult outret;
-        outret.result = 1;
-        SendData(_csock,(DataHeader*) &outret);
-    }
-        break;
-
-    case CMD_Err:
-    {
-        DataHeader headererr;
-        SendData(_csock,(DataHeader*) &headererr);
-    }
-        break;
-    default:
-        printf("server recv cmd=UnDefine \n");
-        break;
-    }
+    m_pNetEvent->OnNetMsg(pClient,header);
 
 }
-
-int CellServer::SendData(SOCKET _csock ,DataHeader* header)
-{
-    if(isRun() && header){
-//        return send(_csock,(const char *)header,sizeof(DataHeader),0);
-        return send(_csock,(const char *)header,header->datalength,0);
-    }
-    return SOCKET_ERROR;
-}
-
-void CellServer::SendDataToAll(DataHeader* header)
-{
-    for(int i=(int)m_clients.size()-1;i>=0 ;i--){
-        SendData(m_clients[i]->m_sockfd,header);
-    }
-}
-
 
 void CellServer::Close()
 {
@@ -291,9 +259,6 @@ void CellServer::Close()
 }
 
 
-
-
-
 void CellServer::addClient(ClientSocket* client)
 {
     //或者
@@ -313,3 +278,20 @@ void CellServer::setEventOj(INetEvent* event)
     m_pNetEvent = event;
 }
 
+
+
+int CellServer::SendData(SOCKET _csock ,DataHeader* header)
+{
+    if(isRun() && header){
+//        return send(_csock,(const char *)header,sizeof(DataHeader),0);
+        return send(_csock,(const char *)header,header->datalength,0);
+    }
+    return SOCKET_ERROR;
+}
+
+void CellServer::SendDataToAll(DataHeader* header)
+{
+    for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+        SendData(m_clients[i]->m_sockfd,header);
+    }
+}
