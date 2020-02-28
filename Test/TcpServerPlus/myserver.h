@@ -10,29 +10,27 @@ public:
 
     virtual void OnNetJoin(ClientSocket* pClient)
     {
-        _clentsCount++;
-
+         TcpServer::OnNetJoin(pClient);
     }
 
     virtual void OnNetLeave(ClientSocket* pClient)
     {
-        _clentsCount--;
+        TcpServer::OnNetLeave(pClient);
     }
 
     virtual void OnNetRecv(ClientSocket* pClient)
     {
-        _recvCount ++;
+        TcpServer::OnNetRecv(pClient);
     }
 
     virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header)
     {
 
-        _msgCount ++;
-
+        TcpServer::OnNetMsg(pClient,header);
         //处理请求
         if(!header)
         {
-             printf("header is empty");
+            printf("header is empty");
         }
         // 6处理请求
         switch (header->cmd) {

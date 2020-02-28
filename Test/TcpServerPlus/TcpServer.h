@@ -51,18 +51,30 @@ public:
 
     void Close();
 
-//    virtual void OnNetLeave(ClientSocket* pClient){}
+    virtual void OnNetLeave(ClientSocket* pClient)
+    {
+        _clentsCount--;
+    }
 
 
-//    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header){}
+    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header)
+    {
+        _msgCount ++;
+    }
 
-//    virtual void OnNetJoin(ClientSocket* pClient){}
+    virtual void OnNetJoin(ClientSocket* pClient)
+    {
+        _clentsCount++;
+    }
 
-//    virtual void OnNetRecv(ClientSocket* pClient){}
+    virtual void OnNetRecv(ClientSocket* pClient)
+    {
+        _recvCount ++;
+    }
 
-//    int RecvData(ClientSocket* _csock);
+    //    int RecvData(ClientSocket* _csock);
 
-//    int SendData(SOCKET _csock ,DataHeader* header);
+    //    int SendData(SOCKET _csock ,DataHeader* header);
 
 
 

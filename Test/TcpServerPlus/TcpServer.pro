@@ -5,10 +5,10 @@ CONFIG -= qt
 
 
 #windows
-#LIBS+=libws2_32
+LIBS+=libws2_32
 
 #linux
-LIBS += -lpthread
+#LIBS += -lpthread
 
 
 SOURCES += main.cpp \
@@ -22,6 +22,7 @@ HEADERS += \
     CELLTimestamp.h \
     INetEvent.h \
     inetevent.h \
-    celltimestamp.h \
+    CellTimestamp.h \
     CellServer.h \
-    myserver.h
+    MyServer.h \
+    CellTask.h

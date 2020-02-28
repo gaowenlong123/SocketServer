@@ -22,8 +22,8 @@
 
 
 
-#define RECV_BUFF_SIZE 1024 //10k
-
+#define RECV_BUFF_SIZE 10240 //10k
+#define SEND_BUFF_SIZE 10240 //10k
 
 
 enum CMD{
