@@ -16,4 +16,5 @@ SOURCES += main.cpp \
 
 HEADERS += \
     TcpClient.h \
-    MessageHeader.h
+    MessageHeader.h \
+    celltimestamp.h

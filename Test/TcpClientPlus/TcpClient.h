@@ -18,7 +18,7 @@
 #endif
 
 #include "MessageHeader.h"
-#include "atomic"
+#include <atomic>
 
 class TcpClient
 {
@@ -56,7 +56,7 @@ private:
     int m_lastMsgPos = 0;
 
 
-    std::atomic_int count;
+    std::atomic_int sendcount;
 };
 
 

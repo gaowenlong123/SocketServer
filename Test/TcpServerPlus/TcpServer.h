@@ -16,7 +16,7 @@
 
 
 
-#define _CELL_THREAD_COUNT 4
+#define _CELL_THREAD_COUNT 1
 
 using namespace std;
 

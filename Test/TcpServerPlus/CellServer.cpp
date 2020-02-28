@@ -183,9 +183,8 @@ int CellServer::RecvData(ClientSocket* pclient)
 //            break;
 //        }
 //    }
-    
-   
-    char* szRecv = pclient->msgBuf() + pclient->getlastMsgPos(); //上一次最后的位置
+
+    char* szRecv = pclient->msgBuf() + pclient->getlastMsgPos();
     int nLen = (int)recv(pclient->m_sockfd, szRecv, (RECV_BUFF_SIZE)- pclient->getlastMsgPos(), 0);
 
     //recv jishu

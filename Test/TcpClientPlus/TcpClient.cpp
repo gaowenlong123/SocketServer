@@ -4,13 +4,14 @@
 #include "algorithm"
 #include <stdio.h>
 #include <thread>
+
 using namespace std;
 
 
 
 TcpClient::TcpClient()
 {
-    count =0;
+    sendcount =0;
     m_sock =INVALID_SOCKET;
 }
 
@@ -231,13 +232,12 @@ void TcpClient::OnNetMsg(DataHeader* header)
 
 
 int TcpClient::SendData(DataHeader* header){
-    count++;
     if(isRun() && header){
         //        return send(m_sock,(const char *)header,sizeof(DataHeader),0);
 
         int ret =send(m_sock,(const char *)header,header->datalength,0);
 
-        printf("send rsendsendsend ==<%d>\n",ret);
+//        printf("send rsendsendsend ==<%d>\n",ret);
 
         return ret;
 

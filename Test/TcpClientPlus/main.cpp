@@ -2,6 +2,9 @@
 #include "TcpClient.h"
 #include <thread>
 #include<pthread.h>
+#include <celltimestamp.h>
+#include <atomic>
+
 using namespace std;
 
 void cmdThread();
@@ -10,13 +13,15 @@ void sendThread(int id);
 bool g_bRun = true;
 
 //客户端数量
-const int cCount = 4;
+const int cCount = 200;
 
 //线程数量
 const int tCount = 4;
 
 //客户端数组
 TcpClient* client[cCount];
+
+std::atomic_int count;
 
 int main(int argc, char *argv[])
 {
@@ -31,12 +36,25 @@ int main(int argc, char *argv[])
         t.detach();
     }
 
+    CELLTimestamp tTime;
     while(g_bRun)
     {
-        //休眠1毫秒
-        std::chrono::milliseconds t(1);
-        std::this_thread::sleep_for(t);
+
+        auto t = tTime.getElapsedSecond();
+        if(t >= 1.0)
+        {
+            printf("thread<%d> , clients<%d> ,time<%lf>,send<%d> \n" , tCount ,cCount , t ,(int)count);
+            tTime.update();
+            count=0;
+        }
+
+        std::chrono::milliseconds t1(1000);
+        std::this_thread::sleep_for(t1);
+
     }
+
+
+
     printf("byebye!!\n");
     return 0;
 }
@@ -76,7 +94,10 @@ void sendThread(int id)
     {
         for(int n = begin;n<end;n++)
         {
-            client[n]->SendData(&login);
+            if(SOCKET_ERROR != client[n]->SendData(&login))
+            {
+                count++;
+            }
         }
     }
 
