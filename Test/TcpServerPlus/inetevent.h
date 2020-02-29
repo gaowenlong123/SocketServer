@@ -2,6 +2,8 @@
 #define INETEVENT_H
 #include <MessageHeader.h>
 #include <CellServer.h>
+
+class CellServer;
 class INetEvent
 {
 public:

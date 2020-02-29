@@ -1,9 +1,8 @@
 #ifndef CELLSERVER_H
 #define CELLSERVER_H
 #include "ClientSocket.h"
-#include "inetevent.h"
 #include "CellTask.h"
-
+#include "INetEvent.h"
 
 
 #include <mutex>
@@ -30,13 +29,11 @@ public:
 
     virtual void doTask()
     {
-        m_pClient->SendData(m_header);
+        int ret = m_pClient->SendData(m_header);
+         printf("aaaaaaaaaaaaaaaaaaaaa===<%d>\n",ret);
         delete m_header;
     }
 };
-
-
-
 
 
 class CellServer
@@ -72,7 +69,7 @@ public:
 
     void SendDataToAll(DataHeader* header);
 
-    void addSendTask(CellTask* _task);
+    void addSendTask(ClientSocket* pClient, DataHeader* header);
 
 private:
     SOCKET m_sock;
@@ -97,5 +94,8 @@ private:
     CellTaskServer m_TaskServer;
 
 };
+
+
+
 
 #endif // CELLSERVER_H

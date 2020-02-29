@@ -11,7 +11,6 @@
 #include "ClientSocket.h"
 #include "celltimestamp.h"
 #include "CellServer.h"
-#include "inetevent.h"
 #include "iostream"
 
 
@@ -19,6 +18,9 @@
 
 
 using namespace std;
+
+
+
 
 class TcpServer : public INetEvent
 {

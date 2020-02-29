@@ -58,7 +58,7 @@ public:
 
                 nSendLen -= nSendLen;
 
-                ret = send(m_sockfd , m_szSendBuff , SEND_BUFF_SIZE,0);
+                ret = send(m_sockfd , (const char *)m_szSendBuff , SEND_BUFF_SIZE,0);
 
                 m_lastSendPos = 0;
 
@@ -75,6 +75,7 @@ public:
             }
         }
 
+//        int ret =  send(m_sockfd,(const char *)header,header->datalength,0);
 
         return ret;
     }

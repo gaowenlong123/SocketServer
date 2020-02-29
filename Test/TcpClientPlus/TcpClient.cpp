@@ -104,7 +104,7 @@ bool TcpClient::OnRun(){
         fd_set fdReads;
         FD_ZERO(&fdReads);
         FD_SET(m_sock,&fdReads);
-        timeval t ={5,0};
+        timeval t ={0,2};
 
         int ret = select(m_sock+1,&fdReads ,NULL ,NULL, &t);
         if(ret < 0)
@@ -145,6 +145,7 @@ int  TcpClient::RecvData(SOCKET csock){
 
     //5接受数据
     int nlen =  (int)recv(csock,m_szRecv,RECV_BUFF_SIZE,0);
+     printf("RecvData <%d>!!\n",nlen);
 
     if(nlen<=0){
         printf("client server quit!!\n");

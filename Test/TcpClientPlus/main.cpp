@@ -13,10 +13,10 @@ void sendThread(int id);
 bool g_bRun = true;
 
 //客户端数量
-const int cCount = 200;
+const int cCount = 1;
 
 //线程数量
-const int tCount = 4;
+const int tCount = 1;
 
 //客户端数组
 TcpClient* client[cCount];
@@ -98,6 +98,8 @@ void sendThread(int id)
             {
                 count++;
             }
+
+            client[n]->OnRun();
         }
     }
 

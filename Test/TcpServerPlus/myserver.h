@@ -38,10 +38,10 @@ public:
         {
             Login* login = (Login*)header;
             //判断账号密码是否正确
-//                printf("Server recv cmd=CMD_LOGIN ; username= %s ; length=%d\n",login->name ,login->datalength);
-//            LoginResult ret;
-//            ret.result = 1;
-    //        SendData(_csock,(DataHeader*) &ret);
+           printf("Server recv cmd=CMD_LOGIN ; username= %s ; length=%d\n",login->name ,login->datalength);
+            LoginResult* ret = new LoginResult();
+            ret->result = 1;
+            pServer->addSendTask(pClient,ret);
 
         }
             break;

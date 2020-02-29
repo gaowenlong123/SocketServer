@@ -281,8 +281,10 @@ void CellServer::setEventOj(INetEvent* event)
 }
 
 
-void  CellServer::addSendTask(CellTask* _task)
+void  CellServer::addSendTask(ClientSocket* pClient, DataHeader* header)
 {
+    CellSendMag2ClientTask* _task = new CellSendMag2ClientTask(pClient , header);
+    m_TaskServer.addTask(_task);
 
 }
 
