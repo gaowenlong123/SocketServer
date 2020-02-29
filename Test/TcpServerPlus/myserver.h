@@ -23,10 +23,10 @@ public:
         TcpServer::OnNetRecv(pClient);
     }
 
-    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header)
+    virtual void OnNetMsg(CellServer* pServer,ClientSocket* pClient, DataHeader* header)
     {
 
-        TcpServer::OnNetMsg(pClient,header);
+        TcpServer::OnNetMsg(pServer,pClient,header);
         //处理请求
         if(!header)
         {

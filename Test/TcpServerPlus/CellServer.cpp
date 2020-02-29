@@ -19,6 +19,8 @@ void CellServer::Start()
 {
     m_pthread = std::thread(std::mem_fn(&CellServer::OnRun) ,this);
     m_pthread.detach();
+
+    m_TaskServer.StartTask();
 }
 
 
@@ -225,7 +227,7 @@ int CellServer::RecvData(ClientSocket* pclient)
 void CellServer::OnNetMsg(ClientSocket* pClient, DataHeader* header)
 {
     //计数
-    m_pNetEvent->OnNetMsg(pClient,header);
+    m_pNetEvent->OnNetMsg(this,pClient,header);
 
 }
 
@@ -276,6 +278,12 @@ size_t CellServer::getClientSize()
 void CellServer::setEventOj(INetEvent* event)
 {
     m_pNetEvent = event;
+}
+
+
+void  CellServer::addSendTask(CellTask* _task)
+{
+
 }
 
 

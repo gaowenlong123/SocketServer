@@ -2,6 +2,7 @@
 #define CELLSERVER_H
 #include "ClientSocket.h"
 #include "inetevent.h"
+#include "CellTask.h"
 
 
 
@@ -12,6 +13,31 @@
 
 
 using namespace std;
+
+
+
+class CellSendMag2ClientTask : public CellTask
+{
+    ClientSocket* m_pClient;
+    DataHeader* m_header;
+
+public:
+    CellSendMag2ClientTask(ClientSocket* pClient, DataHeader* header)
+    {
+        m_pClient = pClient;
+        m_header = header;
+    }
+
+    virtual void doTask()
+    {
+        m_pClient->SendData(m_header);
+        delete m_header;
+    }
+};
+
+
+
+
 
 class CellServer
 {
@@ -46,6 +72,7 @@ public:
 
     void SendDataToAll(DataHeader* header);
 
+    void addSendTask(CellTask* _task);
 
 private:
     SOCKET m_sock;
@@ -66,6 +93,8 @@ private:
     INetEvent* m_pNetEvent;
 
     std::atomic_uint  count ;
+
+    CellTaskServer m_TaskServer;
 
 };
 

@@ -15,8 +15,8 @@
 #include "iostream"
 
 
+#define _CELL_THREAD_COUNT 4
 
-#define _CELL_THREAD_COUNT 1
 
 using namespace std;
 
@@ -57,7 +57,7 @@ public:
     }
 
 
-    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header)
+    virtual void OnNetMsg(CellServer* pServer, ClientSocket* pClient, DataHeader* header)
     {
         _msgCount ++;
     }
