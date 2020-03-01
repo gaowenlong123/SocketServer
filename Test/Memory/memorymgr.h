@@ -115,15 +115,18 @@ public:
             _pReturn->nRef = 1;
             _pReturn->pAlloc = this;
             _pReturn->pNext = nullptr;
+
+            printf("allocMem out pool: %llx , id=%d , size=%d \n" ,_pReturn , _pReturn->nID , (int)nSize );
+
         }else{
             _pReturn = _pHeader;
             _pHeader = _pHeader->pNext;
             assert(0==_pReturn->nRef);
             _pReturn->nRef  =1;
 
+             printf("allocMem: %llx , id=%d , size=%d \n" ,_pReturn , _pReturn->nID , (int)nSize );
         }
 
-        printf("allocMem: %llx , id=%d , size=%d \n" ,_pReturn , _pReturn->nID , (int)nSize );
         return ((char*)_pReturn + sizeof(MemoryBlock));
     }
 

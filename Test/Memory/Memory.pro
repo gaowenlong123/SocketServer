@@ -8,4 +8,5 @@ SOURCES += main.cpp \
 
 HEADERS += \
     Memory.h \
-    MemoryMgr.h
+    MemoryMgr.h \
+    CellObjPool.h \
