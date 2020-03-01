@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
-
+#include <mutex>
 
 /*
             | header              |     64kb用户实际操作内存块       |
@@ -85,6 +85,8 @@ public:
 
         _nBlockSzie=0;
 
+        printf("MemoryAlloc\n");
+
     }
 
     ~MemoryAlloc()
@@ -96,6 +98,8 @@ public:
     //申请内存
     void* allocMem(size_t nSize)
     {
+        std::lock_guard<std::mutex> lg(_mutex);
+
         if(!_pBuf)
             initMemory() ;
 
@@ -130,19 +134,27 @@ public:
         MemoryBlock* pBlock = (MemoryBlock*) (pData - (sizeof(MemoryBlock)));
         assert(1==pBlock->nRef);
 
-        //兼容共享内存
-        if(--pBlock->nRef != 0)
-        {
-            return;
-        }
+
 
         if(pBlock->bPool)
         {
-             pBlock->pNext = _pHeader;
-             _pHeader = pBlock;
+            std::lock_guard<std::mutex> lg(_mutex);
+
+            //兼容共享内存
+            if(--pBlock->nRef != 0)
+            {
+                return;
+            }
+
+            pBlock->pNext = _pHeader;
+            _pHeader = pBlock;
 
         }else{
-              free(pBlock);
+            if (--pBlock->nRef != 0)
+            {
+                return;
+            }
+            free(pBlock);
         }
     }
 
@@ -197,7 +209,7 @@ protected:
     //内存单元的数量
     size_t _nBlockSzie;
 
-
+    std::mutex _mutex;
 };
 
 
