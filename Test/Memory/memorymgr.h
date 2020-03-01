@@ -12,7 +12,18 @@
 
 */
 
-#define MAX_MEMORY_SIZE 64
+
+//配置 debug模式下 可以输出内容  ， 其他模式下不能输出
+#ifdef Debug
+    #include <stdio.h>
+    #define xPrintf(...) printf(__VA_ARGS__)
+#else
+    #include <stdio.h>
+    #define xPrintf(...)
+#endif
+
+
+#define MAX_MEMORY_SIZE 1024
 
 
 //内存块 最小单元
@@ -49,13 +60,13 @@ public:
 private:
 
     //补齐32字节  ，指针根据操作系统的不同可能是8字节也可能是4字节 ， 存储的方式也可能不同4字节对齐，还有8字节对齐
-    int c1;
-    int c2;
-    int c3;
+//    int c1;
+//    int c2;
+//    int c3;
 
-//    char c1;
-//    char c2;
-//    char c3;
+    char c1;
+    char c2;
+    char c3;
 };
 
 
@@ -108,6 +119,7 @@ public:
 
         }
 
+        printf("allocMem: %llx , id=%d , size=%d \n" ,_pReturn , _pReturn->nID , (int)nSize );
         return ((char*)_pReturn + sizeof(MemoryBlock));
     }
 
@@ -158,7 +170,7 @@ public:
         MemoryBlock* _upTemp = _pHeader;
         for(size_t n = 1;n<_nBlockSzie;n++)
         {
-             MemoryBlock* _pTemp = (MemoryBlock*)(_pBuf + n*_nSize);
+             MemoryBlock* _pTemp = (MemoryBlock*)(_pBuf + n*(_nSize + sizeof(MemoryBlock)));
              _pTemp->bPool = true;
              _pTemp->nID = n;
              _pTemp->nRef = 0;
@@ -212,7 +224,10 @@ class MemoryMgr
 private:
     MemoryMgr()
     {
-        init(0,64,&_mem64);
+        init(0,128,&_mem128);
+         init(129,256,&_mem256);
+          init(257,516,&_mem516);
+           init(517,1024,&_mem1024);
     }
 
     ~MemoryMgr()
@@ -245,6 +260,8 @@ public:
             _pReturn->pAlloc = nullptr;
             _pReturn->pNext = nullptr;
 
+            printf("alloc_Mgr: %llx , id=%d , size=%d\n" ,_pReturn , (int)_pReturn->nID , (int)nSize );
+
             return  ((char*)_pReturn + sizeof(MemoryBlock));
         }
 
@@ -254,6 +271,7 @@ public:
     void free_Mgr(void* pMem)
     {
         MemoryBlock* pBlock = (MemoryBlock*) ((char*)pMem - (sizeof(MemoryBlock)));
+        printf("freeMem: %llx , id=%d \n ",pBlock , pBlock->nID  );
         assert(1==pBlock->nRef);
 
         //兼容共享内存
@@ -287,9 +305,10 @@ private:
     }
 
 
-    MemoryAlloctor<64,10> _mem64;
-    MemoryAlloctor<128,10> _mem128;
-    MemoryAlloctor<1024,10> _mem1024;
+    MemoryAlloctor<128,10000> _mem128;
+    MemoryAlloctor<256,10000> _mem256;
+    MemoryAlloctor<516,10000> _mem516;
+    MemoryAlloctor<1024,10000> _mem1024;
 
     MemoryAlloc*  _szAlloc[MAX_MEMORY_SIZE+1];
 
