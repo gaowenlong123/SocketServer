@@ -143,43 +143,76 @@ bool TcpClient::isRun()
 
 int  TcpClient::RecvData(SOCKET csock){
 
-    //5接受数据
-    int nlen =  (int)recv(csock,m_szRecv,RECV_BUFF_SIZE,0);
-     printf("RecvData <%d>!!\n",nlen);
+//    //5接受数据
+//    int nlen =  (int)recv(csock,m_szRecv,RECV_BUFF_SIZE,0);
+//     printf("RecvData <%d>!!\n",nlen);
 
-    if(nlen<=0){
-        printf("client server quit!!\n");
+//    if(nlen<=0){
+//        printf("client server quit!!\n");
+//        return -1;
+//    }
+
+//    // recvbuf ==> msgbuf
+//    memcpy(m_szMsgBuff + m_lastMsgPos,m_szRecv,nlen);
+
+//    m_lastMsgPos+=nlen;
+
+//    //是否粘包
+//    while(m_lastMsgPos >= sizeof(DataHeader)){
+
+//         //是否少包
+//        //recv data size out of  DataHeader's size ==>  get DataHeader
+//        if (m_lastMsgPos  >=  sizeof(DataHeader))
+//        {
+//            DataHeader* header =(DataHeader*)m_szMsgBuff;
+//            if(m_lastMsgPos >= header->datalength)
+//            {
+//                int nSize =  m_lastMsgPos - header->datalength;
+
+//                OnNetMsg(header);
+
+//                //move pointer to unuse data
+//                memcpy(m_szMsgBuff , m_szMsgBuff + header->datalength , m_lastMsgPos - header->datalength);
+//                m_lastMsgPos =nSize;
+//            }
+//        }else {
+//            break;
+//        }
+//    }
+
+//    return 0;
+
+
+    char* szRecv = m_szMsgBuff + m_lastMsgPos;
+    int nLen = (int)recv(csock, szRecv, (RECV_BUFF_SIZE) - m_lastMsgPos, 0);
+    //printf("nLen=%d\n", nLen);
+    if (nLen <= 0)
+    {
+                printf("client server quit!!\n");
         return -1;
     }
 
-    // recvbuf ==> msgbuf
-    memcpy(m_szMsgBuff + m_lastMsgPos,m_szRecv,nlen);
+    m_lastMsgPos += nLen;
 
-    m_lastMsgPos+=nlen;
+    while (m_lastMsgPos >= sizeof(DataHeader))
+    {
 
-    //是否粘包
-    while(m_lastMsgPos >= sizeof(DataHeader)){
+        DataHeader* header = (DataHeader*)m_szMsgBuff;
 
-         //是否少包
-        //recv data size out of  DataHeader's size ==>  get DataHeader
-        if (m_lastMsgPos  >=  sizeof(DataHeader))
+        if (m_lastMsgPos >= header->datalength)
         {
-            DataHeader* header =(DataHeader*)m_szMsgBuff;
-            if(m_lastMsgPos >= header->datalength)
-            {
-                int nSize =  m_lastMsgPos - header->datalength;
+            int nSize = m_lastMsgPos - header->datalength;
 
-                OnNetMsg(header);
+            OnNetMsg(header);
 
-                //move pointer to unuse data
-                memcpy(m_szMsgBuff , m_szMsgBuff + header->datalength , m_lastMsgPos - header->datalength);
-                m_lastMsgPos =nSize;
-            }
-        }else {
+            memcpy(m_szMsgBuff, m_szMsgBuff + header->datalength, nSize);
+
+            m_lastMsgPos = nSize;
+        }
+        else {
             break;
         }
     }
-
     return 0;
 }
 
@@ -232,16 +265,29 @@ void TcpClient::OnNetMsg(DataHeader* header)
 }
 
 
-int TcpClient::SendData(DataHeader* header){
-    if(isRun() && header){
-        //        return send(m_sock,(const char *)header,sizeof(DataHeader),0);
+//int TcpClient::SendData(DataHeader* header){
+//    if(isRun() && header){
+//        //        return send(m_sock,(const char *)header,sizeof(DataHeader),0);
 
-        int ret =send(m_sock,(const char *)header,header->datalength,0);
+//        int ret =send(m_sock,(const char *)header,header->datalength,0);
 
-//        printf("send rsendsendsend ==<%d>\n",ret);
+////        printf("send rsendsendsend ==<%d>\n",ret);
 
-        return ret;
+//        return ret;
 
+//    }
+int TcpClient::SendData(DataHeader* header,int nLen)
+{
+    int ret = SOCKET_ERROR;
+    if (isRun() && header)
+    {
+        ret = send(m_sock, (const char*)header, nLen, 0);
+        if (SOCKET_ERROR == ret)
+        {
+            Close();
+        }
     }
-    return SOCKET_ERROR;
+    return ret;
 }
+
+

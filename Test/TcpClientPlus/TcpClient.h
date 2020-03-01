@@ -42,7 +42,7 @@ public:
 
     void OnNetMsg(DataHeader* header);
 
-    int SendData(DataHeader* header);
+    int SendData(DataHeader* header,int nLen);
 private:
 
     SOCKET m_sock;

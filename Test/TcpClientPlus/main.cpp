@@ -13,10 +13,12 @@ void sendThread(int id);
 bool g_bRun = true;
 
 //客户端数量
-const int cCount = 1;
+const int cCount = 12;
 
 //线程数量
-const int tCount = 1;
+const int tCount = 4;
+
+int readyCount = 0;
 
 //客户端数组
 TcpClient* client[cCount];
@@ -60,6 +62,18 @@ int main(int argc, char *argv[])
 }
 
 
+void recvThread(int begin, int end)
+{
+    while (g_bRun)
+    {
+        for (int n = begin; n < end; n++)
+        {
+            client[n]->OnRun();
+        }
+    }
+}
+
+
 void sendThread(int id)
 {
     int c = cCount / tCount;
@@ -80,33 +94,45 @@ void sendThread(int id)
 
     }
 
+    readyCount ++;
+    while(readyCount < tCount)
+    {
+        //休眠1毫秒
+        std::chrono::milliseconds t(10);
+        std::this_thread::sleep_for(t);
+    }
 
-    //休眠1毫秒
-    std::chrono::milliseconds t(1000);
-    std::this_thread::sleep_for(t);
+    //
+    std::thread t1(recvThread, begin, end);
+    t1.detach();
 
 
-    Login login;
-    strcpy(login.name, "gao");
-    strcpy(login.password, "123");
+    Login login[10];
 
+    for (int n = 0; n < 10; n++)
+    {
+        strcpy(login[n].name, "gao");
+        strcpy(login[n].password, "123");
+    }
+
+    const int nLen = sizeof(Login);
     while(g_bRun)
     {
         for(int n = begin;n<end;n++)
         {
-            if(SOCKET_ERROR != client[n]->SendData(&login))
+            if(SOCKET_ERROR != client[n]->SendData((DataHeader*)&login[n] ,nLen ))
             {
                 count++;
             }
-
-            client[n]->OnRun();
         }
     }
 
     for(int n = begin;n<end;n++)
     {
         client[n]->Close();
+        delete client[n];
     }
+     printf("thread<%d>,exit\n", id);
 
 }
 
@@ -125,34 +151,6 @@ void cmdThread()
             printf("dont support CMD !!\n");
         }
     }
-    //输入请求命令 ， 处理请求
-    //    while(true)
-    //    {
-    //        char cmdBuf[128]={};
-    //        scanf("%s",cmdBuf);
-    //        if(0 == strcmp(cmdBuf,"exit"))
-    //        {
-    //            printf("exit quit !!\n");
-    //            _sock->Close();
-    //            break;
-    //        }else if(0 == strcmp(cmdBuf,"login"))
-    //        {
-    //            Login login;
-    //            strcpy(login.name,"gao");
-    //            strcpy(login.password,"123");
-    //            _sock->SendData(&login);
-
-    //        }else if(0 == strcmp(cmdBuf,"loginout"))
-    //        {
-    //            LoginOut login;
-    //            strcpy(login.name,"gao");
-    //            _sock->SendData(&login);
-
-    //        }else{
-    //             printf("dont support CMD !!\n");
-    //        }
-    //    }
-
-
-
 }
+
+

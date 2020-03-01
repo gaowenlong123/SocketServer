@@ -64,7 +64,7 @@ public:
                 //copy完数据进行偏移
                 pSendData += nCopyLen;
 
-                nSendLen -= nSendLen;
+                nSendLen -= nCopyLen;
 
                 ret = send(m_sockfd , (const char *)m_szSendBuff , SEND_BUFF_SIZE,0);
 

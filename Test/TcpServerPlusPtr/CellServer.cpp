@@ -239,7 +239,7 @@ void CellServer::Close()
         for(int  i=(int)m_clients.size()-1;i>=0 ;i--){
 
             closesocket(m_clients[i]->m_sockfd);
-            delete m_clients[i];
+//            delete m_clients[i];
         }
 
         closesocket(m_sock);

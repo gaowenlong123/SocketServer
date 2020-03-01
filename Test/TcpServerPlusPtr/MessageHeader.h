@@ -22,7 +22,7 @@
 
 
 #define RECV_BUFF_SIZE 10240 //10k
-#define SEND_BUFF_SIZE 8//1k
+#define SEND_BUFF_SIZE 1024//1k
 
 
 #include <memory>
