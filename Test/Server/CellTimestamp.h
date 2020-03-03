@@ -8,7 +8,7 @@ class CELLTime
 public:
     static time_t getNowInMilliSec()
     {
-        return getElapsedTimeInMicroSec() * 0.001;
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     }
 
 

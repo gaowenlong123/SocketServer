@@ -2,6 +2,19 @@
 #define CELLTIMESTAMP_H
 #include <chrono>
 #include <iomanip>
+#include "iostream"
+
+class CELLTime
+{
+public:
+    static time_t getNowInMilliSec()
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    }
+
+
+
+};
 
 class CELLTimestamp
 {

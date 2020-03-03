@@ -30,12 +30,14 @@
 
 
 enum CMD{
+
     CMD_LOGIN,
     CMD_LOGIN_RESULT,
     CMD_LOGINOUT,
     CMD_LOGINOUT_RESULT,
     CMD_NEWLOGIN,
     CMD_Err,
+    CMD_HEART,
 };
 
 struct DataHeader
@@ -47,6 +49,19 @@ struct DataHeader
     short datalength;
     short cmd;
 };
+
+
+struct Heart :public DataHeader
+{
+    Heart(){
+        datalength = sizeof(Heart);
+        cmd = CMD_HEART;
+    }
+
+     int result;
+};
+
+
 
 //DataPackage
 struct Login :public DataHeader
@@ -106,5 +121,6 @@ typedef std::shared_ptr<LoginResult> LoginResultPtr;
 typedef DataHeaderPtr&  DataHeaderPtrRef;
 typedef LoginResultPtr&  LoginResultPtrRef;
 
-
+typedef std::shared_ptr<Heart> HeartPtr;
+typedef HeartPtr&  HeartPtrRef;
 #endif // MESSAGEHEADER_H

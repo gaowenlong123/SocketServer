@@ -64,6 +64,23 @@ public:
     //        SendData(_csock,(DataHeader*) &headererr);
         }
             break;
+
+        case CMD_HEART:
+        {
+
+            Heart* heart = (Heart*)header;
+            printf("Server recv cmd=CMD_HEART ; result= %d ; length=%d\n",heart->result);
+
+            pClient->resetDTHeart();
+
+            HeartPtr ret = std::make_shared<Heart>();
+            ret->result = 1;
+            pServer->addSendTask(pClient,(DataHeaderPtrRef)ret);
+
+        }
+
+            break;
+
         default:
             printf("server recv cmd=UnDefine \n");
             break;

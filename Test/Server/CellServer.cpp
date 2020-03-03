@@ -5,6 +5,8 @@ CellServer::CellServer(SOCKET sock)
     m_sock = sock;
     m_pNetEvent = nullptr;
     count = 1;
+
+    _oldTime = CELLTime::getNowInMilliSec();
 }
 
 
@@ -35,7 +37,6 @@ bool CellServer::OnRun()
 
     while(isRun())
     {
-
         if(m_clientsBuff.size() > 0)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -54,6 +55,9 @@ bool CellServer::OnRun()
             //休眠1毫秒
             std::chrono::milliseconds t(1);
             std::this_thread::sleep_for(t);
+
+            _oldTime = CELLTime::getNowInMilliSec();
+
             continue ;
         }
 
@@ -91,7 +95,7 @@ bool CellServer::OnRun()
         }
 
 
-        timeval t ={0,0};
+        timeval t ={0,1};
 
         //all socket +1
         int ret = select(maxSock+1,&fdRead,nullptr,nullptr,&t);   //查询没有数据，等t时间后离开
@@ -131,6 +135,38 @@ bool CellServer::OnRun()
             }
 
         }
+
+
+        //check heart
+        auto nowTime = CELLTime::getNowInMilliSec();
+        auto dt = nowTime - _oldTime;
+        _oldTime = nowTime;
+        printf("dt==>%d ",(int)dt );
+        for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+
+            m_clients[i]->checkSend((int)dt);
+
+            if(m_clients[i]->checkHeart( (int)dt ))
+            {
+                auto iter = m_clients.begin() + i;
+
+                if(iter != m_clients.end()){
+
+                    //退出事件
+                    if(m_pNetEvent){
+                        m_pNetEvent->OnNetLeave(m_clients[i]);
+                    }
+
+                    //Close();
+
+                    _clients_change = true;
+                    m_clients.erase(iter);
+
+                }
+            }
+
+        }
+
     }
    return false;
 }
@@ -197,6 +233,7 @@ int CellServer::RecvData(ClientSocketPtr pclient)
         printf("client <%d> quit \n",pclient->m_sockfd);
         return -1;
     }
+
 
     pclient->setlastMsgPos(pclient->getlastMsgPos() + nLen);
 

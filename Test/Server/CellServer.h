@@ -4,7 +4,7 @@
 #include "ClientSocket.h"
 #include "CellTask.h"
 #include "INetEvent.h"
-
+#include "CellTimestamp.h"
 
 #include <mutex>
 #include <thread>
@@ -100,6 +100,8 @@ private:
     std::atomic_uint  count ;
 
     CellTaskServer m_TaskServer;
+
+    time_t _oldTime ;
 
 };
 

@@ -8,12 +8,13 @@
 using namespace std;
 
 void cmdThread();
+void HeartThread(int begin, int end);
 void sendThread(int id);
 
 bool g_bRun = true;
 
 //客户端数量
-const int cCount = 12;
+const int cCount = 4;
 
 //线程数量
 const int tCount = 4;
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
     //启动UI线程
     std::thread t1(cmdThread);
     t1.detach();
+
 
     //启动发送线程
     for(int n=0 ;n < tCount;n++)
@@ -73,6 +75,24 @@ void recvThread(int begin, int end)
     }
 }
 
+void HeartThread(int begin, int end)
+{
+    Heart heart ;
+    heart.result = 0;
+    while (g_bRun)
+    {
+        for (int n = begin; n < end; n++)
+        {
+            if(SOCKET_ERROR != client[n]->SendData((DataHeader*)&heart ,heart.datalength ))
+            {
+                count++;
+                std::chrono::milliseconds t1(5001);
+                std::this_thread::sleep_for(t1);
+            }
+        }
+    }
+}
+
 
 void sendThread(int id)
 {
@@ -107,6 +127,11 @@ void sendThread(int id)
     t1.detach();
 
 
+
+    //heart thread
+    std::thread t2(HeartThread,begin, end);
+    t2.detach();
+
     Login login[10];
 
     for (int n = 0; n < 10; n++)
@@ -120,10 +145,11 @@ void sendThread(int id)
     {
         for(int n = begin;n<end;n++)
         {
-            if(SOCKET_ERROR != client[n]->SendData((DataHeader*)&login[n] ,nLen ))
-            {
-                count++;
-            }
+//            if(SOCKET_ERROR != client[n]->SendData((DataHeader*)&login[n] ,nLen ))
+//            {
+//                count++;
+
+//            }
         }
     }
 
