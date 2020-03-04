@@ -9,6 +9,7 @@
 #include <memory.h>
 #include "iostream"
 
+#include "CELLThread.h"
 
 //匿名函数
 //可以减少new的操作，提高效率
@@ -28,7 +29,7 @@ public:
     //虚析构
     ~CellTaskServer()
     {
-
+//       Close();
     }
 
     void addTask(CellTask task)
@@ -39,15 +40,32 @@ public:
 
     void StartTask()
     {
-        std::thread  _thread(std::mem_fn(&CellTaskServer::OnRun),this);
-        _thread.detach();
+
+//        std::thread  _thread(std::mem_fn(&CellTaskServer::OnRun),this);
+//        _thread.detach();
+
+        m_thread.Start(nullptr,[this](CELLThread* pThread){OnRun(pThread);},nullptr);
+    }
+
+    void Close()
+    {
+
+            printf("Close CellTask start\n");
+
+//            m_isRun = false;
+//            m_sem.wait();
+
+            m_thread.Close();
+
+            printf("Close CellTask end\n");
+
     }
 
 
 private:
-    void OnRun()
+    void OnRun(CELLThread* pThread)
     {
-        while(true)
+        while(pThread->isRun())
         {
             if(!m_taskBuf.empty())
             {
@@ -75,7 +93,8 @@ private:
             m_tasks.clear();
         }
 
-
+        printf("CellTask OnRun exit \n");
+//        m_sem.wakeup();
     }
 
 
@@ -89,7 +108,7 @@ private:
     std::mutex m_mutex;
 
     //线程
-    std::thread * m_thread;
+    CELLThread m_thread;
 
 };
 

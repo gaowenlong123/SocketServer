@@ -5,6 +5,7 @@
 #include "CellTask.h"
 #include "INetEvent.h"
 #include "CellTimestamp.h"
+#include "CELLThread.h"
 
 #include <mutex>
 #include <thread>
@@ -56,7 +57,7 @@ public:
     void Start();
 
     //只用来读取客户端发来的数据
-    bool OnRun();
+    bool OnRun(CELLThread* pThread);
 
     bool isRun();
 
@@ -79,6 +80,11 @@ public:
 
     void addSendTask(ClientSocketPtr& pClient, DataHeaderPtr& header);
 
+    void ClearClients(){}
+
+
+    bool  WriteData(fd_set& _fd);
+
 private:
     SOCKET m_sock;
 
@@ -93,7 +99,7 @@ private:
 
     std::mutex m_mutex;
 
-    std::thread m_pthread;
+    CELLThread m_pthread;
 
     INetEvent* m_pNetEvent;
 
@@ -102,6 +108,8 @@ private:
     CellTaskServer m_TaskServer;
 
     time_t _oldTime ;
+
+
 
 };
 

@@ -29,4 +29,6 @@ HEADERS += \
     CellTask.h \
     ../Memory/Memory.h \
     ../Memory/MemoryMgr.h \
-    ../Memory/CellObjPool.h
+    ../Memory/CellObjPool.h \
+    CSemaphore.h \
+    CELLThread.h

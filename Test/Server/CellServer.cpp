@@ -19,15 +19,16 @@ CellServer::~CellServer()
 
 void CellServer::Start()
 {
-    m_pthread = std::thread(std::mem_fn(&CellServer::OnRun) ,this);
-    m_pthread.detach();
+//    m_pthread = std::thread(std::mem_fn(&CellServer::OnRun) ,this);
+//    m_pthread.detach();
 
+    m_pthread.Start(nullptr,[this](CELLThread* pThread){OnRun(pThread);},[this](CELLThread* pThread){ClearClients();});
     m_TaskServer.StartTask();
 }
 
 
 //只用来读取客户端发来的数据
-bool CellServer::OnRun()
+bool CellServer::OnRun(CELLThread* pThread)
 {
     fd_set _fdead_back;
     bool _clients_change;
@@ -35,7 +36,7 @@ bool CellServer::OnRun()
 
     _clients_change = true;
 
-    while(isRun())
+    while(pThread->isRun())
     {
         if(m_clientsBuff.size() > 0)
         {
@@ -63,21 +64,26 @@ bool CellServer::OnRun()
 
 
         fd_set fdRead;
-        FD_ZERO(&fdRead);
-//        这个是主线程再操作的socket，所以不需要读
-        FD_SET(m_sock,&fdRead);
+        fd_set fdWrite;
+        fd_set fdExc;
+
 
 
 
         if(_clients_change)
         {
 
-           maxSock = m_clients[0]->m_sockfd;
+            FD_ZERO(&fdRead);
 
-           //        每次查询以及连接的socket是否有数据需要查收
-           for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+            // 这个是主线程再操作的socket，所以不需要读
+            FD_SET(m_sock,&fdRead);
 
-               FD_SET(m_clients[i]->m_sockfd,&fdRead);
+            maxSock = m_clients[0]->m_sockfd;
+
+            //每次查询以及连接的socket是否有数据需要查收
+            for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+
+                FD_SET(m_clients[i]->m_sockfd,&fdRead);
 
                if(maxSock < m_clients[i]->m_sockfd )
                {
@@ -94,15 +100,21 @@ bool CellServer::OnRun()
             memcpy(&fdRead , &_fdead_back ,sizeof(fd_set));
         }
 
+        memcpy(&fdWrite, &_fdead_back  ,sizeof(fd_set));
+        memcpy(&fdExc, &_fdead_back  ,sizeof(fd_set));
+
+
 
         timeval t ={0,1};
 
         //all socket +1
-        int ret = select(maxSock+1,&fdRead,nullptr,nullptr,&t);   //查询没有数据，等t时间后离开
+        int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExc,&t);   //查询没有数据，等t时间后离开
         if(ret < 0)
         {
             printf("select err!!\n");
-            Close();
+
+            //cellserver thread quit
+            pThread->Exit();
             return false;
         }
         else if (ret == 0) {
@@ -136,15 +148,16 @@ bool CellServer::OnRun()
 
         }
 
+        //异步模式下SendData
+//        _clients_change = WriteData(fdWrite);
+
 
         //check heart
         auto nowTime = CELLTime::getNowInMilliSec();
         auto dt = nowTime - _oldTime;
         _oldTime = nowTime;
-        printf("dt==>%d ",(int)dt );
+//        printf("dt==>%d\n",(int)dt );
         for(int i=(int)m_clients.size()-1;i>=0 ;i--){
-
-            m_clients[i]->checkSend((int)dt);
 
             if(m_clients[i]->checkHeart( (int)dt ))
             {
@@ -165,6 +178,10 @@ bool CellServer::OnRun()
                 }
             }
 
+
+            //阻塞模式下使用定时SendData
+            m_clients[i]->checkSend((int)dt);
+
         }
 
     }
@@ -172,9 +189,32 @@ bool CellServer::OnRun()
 }
 
 
-bool CellServer::isRun()
+bool  CellServer::WriteData(fd_set& _fd)
 {
-    return m_sock != INVALID_SOCKET ;
+    bool ret = false;
+
+    for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+        if(FD_ISSET(m_clients[i]->m_sockfd,&_fd))
+        {
+            //如果sock客户端退出
+            if(-1==m_clients[i]->SendData())
+            {
+                auto iter = m_clients.begin() + i; // std::vector<SOCKET>::iterator
+                if(iter != m_clients.end()){
+
+                    //退出事件
+                    if(m_pNetEvent){
+                        m_pNetEvent->OnNetLeave(m_clients[i]);
+                    }
+
+                    ret = true;
+                    m_clients.erase(iter);
+                }
+            }
+        }
+    }
+
+    return ret;
 }
 
 
@@ -270,30 +310,33 @@ void CellServer::OnNetMsg(ClientSocketPtr pClient, DataHeader* header)
 
 void CellServer::Close()
 {
-    if(m_sock != INVALID_SOCKET)
-    {
-#ifdef _WIN32
-        for(int  i=(int)m_clients.size()-1;i>=0 ;i--){
+//    if(m_sock != INVALID_SOCKET)
+//    {
+//#ifdef _WIN32
+//        for(int  i=(int)m_clients.size()-1;i>=0 ;i--){
 
-            closesocket(m_clients[i]->m_sockfd);
-//            delete m_clients[i];
-        }
+//            closesocket(m_clients[i]->m_sockfd);
+////            delete m_clients[i];
+//        }
 
-        closesocket(m_sock);
+//        closesocket(m_sock);
 
-#else
-        for(int i=(int)m_clients.size()-1;i>=0 ;i--){
+//#else
+//        for(int i=(int)m_clients.size()-1;i>=0 ;i--){
 
-            close(m_clients[i]->m_sockfd);
-//            delete m_clients[i];
-        }
-        close(m_sock);
-#endif
-        m_sock =INVALID_SOCKET;
+//            close(m_clients[i]->m_sockfd);
+////            delete m_clients[i];
+//        }
+//        close(m_sock);
+//#endif
+//        m_sock =INVALID_SOCKET;
 
-        m_clients.clear();
+//        m_clients.clear();
 
-    }
+//    }
+
+    m_TaskServer.Close();
+    m_pthread.Close();
 
 }
 
@@ -326,8 +369,17 @@ void  CellServer::addSendTask(ClientSocketPtr& pClient, DataHeaderPtr& header)
     //    匿名函数
     //    可以减少new的操作，提高效率
     m_TaskServer.addTask( [pClient,header] (){
-        int ret = pClient->SendData(header);
-        printf("aaaaaaaaaaaaaaaaaaaaa===<%d>\n",ret);
+
+
+//        int ret = pClient->SendData(header);
+//        printf("aaaaaaaaaaaaaaaaaaaaa===<%d>\n",ret);
+
+        //兼容异步
+        int ret = pClient->SendDataAsyn(header);
+        if(ret == 0)
+        {
+
+        }
     }
     );
 
@@ -337,7 +389,7 @@ void  CellServer::addSendTask(ClientSocketPtr& pClient, DataHeaderPtr& header)
 
 int CellServer::SendData(SOCKET _csock ,DataHeader* header)
 {
-    if(isRun() && header){
+    if(header){
 //        return send(_csock,(const char *)header,sizeof(DataHeader),0);
         return send(_csock,(const char *)header,header->datalength,0);
     }

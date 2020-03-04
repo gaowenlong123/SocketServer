@@ -58,14 +58,16 @@ public:
 
     int SendData()
     {
-        int ret = SOCKET_ERROR ;
-        if(m_lastSendPos > 0 && SOCKET_ERROR != m_sockfd)
+        int ret = 0 ;
+        if(m_lastSendPos > 0 && INVALID_SOCKET != m_sockfd)
         {
             ret = send(m_sockfd , (const char *)m_szSendBuff , m_lastSendPos,0);
 
             m_lastSendPos = 0;
 
             resetDTSend();
+
+            m_SendAsyn =0;
         }
 
         return ret;
@@ -120,6 +122,45 @@ public:
 //        printf("m_lastSendPos<%d>",m_lastSendPos);
         return ret;
     }
+
+
+    int SendDataAsyn(DataHeaderPtr header)
+    {
+        //定量发送
+        int ret = 0;
+
+        int nSendLen = header->datalength;
+        //要发送的数据
+        const char* pSendData = (const char*)header.get();
+
+
+        if(m_lastSendPos + nSendLen <= SEND_BUFF_SIZE)
+        {
+
+            memcpy(m_szSendBuff + m_lastSendPos , pSendData , nSendLen);
+            m_lastSendPos += nSendLen;
+
+
+            if(m_lastSendPos == SEND_BUFF_SIZE)
+            {
+                m_SendAsyn ++;
+
+            }
+
+
+            return nSendLen;
+        }
+
+        else{
+
+            m_SendAsyn ++;
+
+        }
+        //        int ret =  send(m_sockfd,(const char *)header,header->datalength,0);
+        //        printf("m_lastSendPos<%d>",m_lastSendPos);
+        return ret;
+    }
+
 
     void resetDTHeart()
     {
@@ -184,6 +225,8 @@ private:
 
     //上次发送数据的时间
     int m_dtSend;
+
+    int m_SendAsyn;
 };
 
 typedef std::shared_ptr<ClientSocket> ClientSocketPtr;

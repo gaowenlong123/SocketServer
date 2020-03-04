@@ -25,6 +25,11 @@ int TcpServer::initSocket()
     WORD ver = MAKEWORD(2,2);
     WSADATA data;
     WSAStartup(ver, &data);
+#else
+
+//    忽略异常信号，防止进程被终止
+//    signal(SIGPIPE ,SIG_IGN);
+
 #endif
 
     //建立一个socket
@@ -154,6 +159,9 @@ void TcpServer::startServerThread()
         server->setEventOj(this);
         server->Start();
     }
+
+    m_pthread.Start(nullptr,[this](CELLThread* pThread){OnRun(pThread);},nullptr);
+
 }
 
 
@@ -172,8 +180,18 @@ void TcpServer::timeForMsg()
 
 void TcpServer::Close()
 {
+    m_pthread.Close();
+
     if(m_sock != INVALID_SOCKET)
     {
+
+        for(auto s : m_cellServers)
+        {
+//            delete s;
+        }
+
+        m_cellServers.clear();
+
 #ifdef _WIN32
     closesocket(m_sock);
     WSACleanup();
@@ -189,10 +207,10 @@ void TcpServer::Close()
 }
 
 //用来接收客户端连接的select任务
-bool TcpServer::OnRun()
+bool TcpServer::OnRun(CELLThread* pThread)
 {
     //这里我只能只读的
-    if(isRun())
+    while (pThread->isRun())
     {
         timeForMsg();
         fd_set fdRead;
@@ -205,7 +223,7 @@ bool TcpServer::OnRun()
 //        FD_SET(m_sock,&fdWrite);
 //        FD_SET(m_sock,&fdExp);
 
-        timeval t ={1,0};
+        timeval t ={0,1};
     //  int ret = select(maxSock+1,&fdRead,&fdWrite,&fdExp,NULL);// 阻塞的模式满足应答的模式，如果需要服务端向客户端推送消息需要非阻塞
 
         //all socket +1
@@ -214,7 +232,7 @@ bool TcpServer::OnRun()
         if(ret < 0)
         {
             printf("select err!!\n");
-            Close();
+            pThread->Exit();
             return false;
         }
 
@@ -223,16 +241,13 @@ bool TcpServer::OnRun()
             FD_CLR(m_sock,&fdRead);
             socketAccept();
         }
-        return true;
+
     }
    return false;
 
 }
 
-bool TcpServer::isRun()
-{
-    return m_sock != INVALID_SOCKET ;
-}
+
 
 
 

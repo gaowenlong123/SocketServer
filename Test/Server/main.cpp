@@ -1,5 +1,6 @@
 #include <iostream>
 #include "MyServer.h"
+#include "CellTask.h"
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -13,12 +14,24 @@ int main(int argc, char *argv[])
 //    server.socketAccept();
 
 
-    while(server.isRun()){
-        server.OnRun();
+
+    while(true)
+    {
+        char cmdBuf[128]={};
+        scanf("%s",cmdBuf);
+        if(0 == strcmp(cmdBuf,"exit"))
+        {
+                server.Close();
+            break;
+        }else{
+            printf("dont support CMD !!\n");
+        }
     }
 
-    server.Close();
+
     getchar();
+
+
 
     return 0;
 }

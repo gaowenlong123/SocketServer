@@ -13,6 +13,7 @@
 #include "CellTimestamp.h"
 #include "CellServer.h"
 #include "iostream"
+#include "CELLThread.h"
 
 
 #define _CELL_THREAD_COUNT 4
@@ -45,9 +46,7 @@ public:
     void timeForMsg();
 
 
-    bool OnRun();
-
-    bool isRun();
+    bool OnRun(CELLThread* pThread);
 
 
     void Close();
@@ -79,7 +78,6 @@ public:
 
 
 
-
     //计数
     std::atomic_int _recvCount;
     std::atomic_int _clentsCount;
@@ -101,10 +99,7 @@ private:
     CELLTimestamp m_tTime;
 
 
-    //msg缓冲区
-    //    char m_szMsgBuff[RECV_BUFF_SIZE*10]={};
-
-    //    int m_lastMsgPos = 0;
+    CELLThread m_pthread;
 
 };
 
