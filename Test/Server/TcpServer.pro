@@ -31,4 +31,5 @@ HEADERS += \
     ../Memory/MemoryMgr.h \
     ../Memory/CellObjPool.h \
     CSemaphore.h \
-    CELLThread.h
+    CELLThread.h \
+    CELLStream.h

@@ -2,6 +2,7 @@
 #define MYSERVER_H
 
 #include "TcpServer.h"
+#include "CELLStream.h"
 
 class MyServer : public TcpServer
 {

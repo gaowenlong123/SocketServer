@@ -4,7 +4,7 @@
 #include "functional"
 #include "iostream"
 #include<mutex>
-
+#include "chrono"
 
 
 class CELLThread
@@ -65,6 +65,12 @@ public:
     bool isRun()
     {
         return m_isRun;
+    }
+
+    static void Sleep(int time)
+    {
+        std::chrono::milliseconds t1(time);
+        std::this_thread::sleep_for(t1);
     }
 
 protected:
