@@ -105,22 +105,22 @@ public:
         return false;
     }
 
-    template<typename T>
-    bool Read(T& n)
-    {
+//    template<typename T>
+//    bool Read(T& n)
+//    {
 
-        auto nLen = sizeof(T);
+//        auto nLen = sizeof(T);
 
-        if(canRead(nLen))
-        {
-            memcpy(&n , m_pBuff +m_lastReadBuffPos ,nLen );
-            m_lastReadBuffPos += nLen;
+//        if(canRead(nLen))
+//        {
+//            memcpy(&n , m_pBuff +m_lastReadBuffPos ,nLen );
+//            m_lastReadBuffPos += nLen;
 
-            return true;
-        }
+//            return true;
+//        }
 
-        return false;
-    }
+//        return false;
+//    }
 
     template<typename T>
     bool Read(T& n ,bool isOffset = true)
