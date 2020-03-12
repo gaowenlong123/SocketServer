@@ -31,11 +31,12 @@ public:
 
 protected:
      virtual void OnNetMsg(DataHeader* header)=0;
+    ClientSocket* m_Clientsock = nullptr;
+
 private:
 
     bool m_isConnect;
 
-    ClientSocket* m_Clientsock = nullptr;
 
     //缓冲区
     char m_szRecv[RECV_BUFF_SIZE]={};
@@ -50,54 +51,6 @@ private:
 };
 
 
-class MyTcpClient : public TcpClient
-{
-    virtual void OnNetMsg(DataHeader* header)
-   {
-       if(!header)
-       {
-            CBaseLog::Info("header is empty");
-       }
-       // 6处理请求
-       switch (header->cmd) {
-       case CMD_LOGIN_RESULT:
-       {
-           LoginResult* login =(LoginResult*)header;
-
-           //判断账号密码是否正确
-           CBaseLog::Info("Client recv cmd=CMD_LOGIN_RESULT ; Result=%d\n" ,login->result);
-
-       }
-           break;
-       case CMD_LOGINOUT_RESULT:
-       {
-           //判断账号密码是否正确
-
-           LoginOutResult* loginout =(LoginOutResult*)header;
-           CBaseLog::Info("cilent recv cmd=CMD_LOGINOUT_RESULT ; Result=%d\n" ,loginout->result);
-
-       }
-           break;
-
-       case CMD_NEWLOGIN:
-       {
-           //判断账号密码是否正确
-
-           NewLogin* newLogin =(NewLogin*)header;
-           CBaseLog::Info("cilent recv cmd=CMD_NEWLOGIN ; new SOCKID=%d\n" ,newLogin->sockId);
-       }
-           break;
-       case CMD_Err:
-       {
-           CBaseLog::Info("cilent recv cmd=CMD_Err ; datalength=%d\n" ,header->datalength);
-       }
-       break;
-       default:
-            CBaseLog::Info("cilent recv cmd=UnDefine \n");
-           break;
-       }
-}
-};
 
 
 #endif // TCPCLIENT_H

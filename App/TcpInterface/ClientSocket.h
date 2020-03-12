@@ -79,6 +79,12 @@ public:
 
     }
 
+    int SendData(DataHeader* header)
+    {
+
+        SendData(std::shared_ptr<DataHeader>(header));
+    }
+
     int SendData(DataHeaderPtr header)
     {
         //定量发送

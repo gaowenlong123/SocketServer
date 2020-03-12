@@ -5,10 +5,10 @@ CONFIG -= qt
 
 
 #windows
-LIBS+=libws2_32
+#LIBS+=libws2_32
 
 #linux
-#LIBS += -lpthread
+LIBS += -lpthread
 
 
 SOURCES += main.cpp \
@@ -25,6 +25,7 @@ HEADERS += \
     ../../Public/Thread/CBaseThread.h \
     ../../Public/Task/CBaseTask.h \
     ../../Public/Stream/CBaseStream.h \
+    ../../Public/Stream/CMsgStream.h \
     ../../Public/Semaphore/CSemaphore.h \
     ../../Public/ObjPool/CBaseObjPool.h \
     ../../Public/Memory/Memory.h \

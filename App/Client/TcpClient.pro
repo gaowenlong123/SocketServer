@@ -5,10 +5,10 @@ CONFIG -= qt
 
 
 #windows
-LIBS+=libws2_32
+#LIBS+=libws2_32
 
 #linux
-#LIBS += -lpthread
+LIBS += -lpthread
 
 
 SOURCES += main.cpp \
@@ -19,6 +19,6 @@ HEADERS += \
     ../../Public/Define/MessageDefine.h \
     ../../Public/Time/CBaseTime.h \
     ../../Public/Log/CBaseLog.h \
-#    myclient.h
+    MyTcpClient.h
 
 

@@ -3,8 +3,7 @@
 #include<pthread.h>
 #include <../../Public/Time/CBaseTime.h>
 #include <atomic>
-//#include "myclient.h"
-#include "TcpClient.h"
+#include "MyTcpClient.h"
 
 using namespace std;
 

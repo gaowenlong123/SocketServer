@@ -250,7 +250,11 @@ int  TcpClient::RecvData(){
 
 int TcpClient::SendData(DataHeader* header,int nLen)
 {
-    return m_Clientsock->SendData((DataHeaderPtr)header);
+    if(isRun())
+    {
+     return m_Clientsock->SendData(header);
+    }
+    return 0;
 }
 
 
