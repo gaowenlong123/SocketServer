@@ -46,8 +46,8 @@ struct DataHeader
         datalength = sizeof(DataHeader);
     }
 
-    short datalength;
-    short cmd;
+    unsigned short datalength;
+    unsigned short cmd;
 };
 
 

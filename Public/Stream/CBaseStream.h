@@ -5,6 +5,7 @@
 
 class CBaseStream
 {
+public:
     CBaseStream(int nSize = 1024)
     {
         m_nSize = nSize;
@@ -19,7 +20,7 @@ class CBaseStream
         m_bDelete = bDelete;
     }
 
-    ~CBaseStream()
+    virtual ~CBaseStream()
     {
         if(m_pBuff && m_bDelete)
         {
@@ -50,6 +51,13 @@ public:
         return def;
     }
 
+
+    int16_t readInt16(int16_t def = 0)
+    {
+        Read<int16_t>(def);
+        return def;
+    }
+
     // 内联函数
     inline bool canRead(int n)
     {
@@ -62,10 +70,37 @@ public:
         return  m_nSize - m_lastWriteBuffPos >= n;
     }
 
+    //已写入位置，添加n字节长度
+    inline void push(int n)
+    {
+        m_lastWriteBuffPos += n;
+
+    }
+
+    //已读取位置，添加n字节长度
+    inline void pop(int n)
+    {
+        //数据尾部位置
+        m_lastReadBuffPos += n;
+    }
+
+    inline void SetWritePos(int n)
+    {
+        //数据尾部位置
+        m_lastWriteBuffPos = n;
+    }
+
+
 
     char* Data()
     {
         return m_pBuff;
+    }
+
+    //write data
+    int length()
+    {
+        return m_lastWriteBuffPos;
     }
 
 
